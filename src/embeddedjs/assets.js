@@ -14,7 +14,7 @@
 
 const fonts = {
 	time:  "bold 72px Oswald",
-	date:  "bold 18px Gothic",
+	date:  "bold 24px Gothic",
 	icons: "20px IcoMoon",
 };
 

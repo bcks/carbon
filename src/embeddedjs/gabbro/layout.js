@@ -52,8 +52,12 @@ const PROGRESS_HEIGHT   = 4; // kept for layout.progressBar consumers; not used 
 // ProgressBar is an overlay, not a Column child — no PROGRESS_HEIGHT deducted.
 const CENTER_HEIGHT = screen.height - TOP_BAR_HEIGHT - PRECIP_HEIGHT - BOTTOM_BAR_HEIGHT;
 
-const CLOCK_BLOCK_H = 72; // estimated ClockLabel + DateLabel combined height
+// Measured combined height of ClockLabel + DateLabel with current fonts.
+// Increase this value to reduce TIME_OFFSET (move clock up).
+const CLOCK_BLOCK_H = 150;
 const TIME_OFFSET   = Math.max(0, Math.floor((CENTER_HEIGHT - CLOCK_BLOCK_H) / 2));
+// Negative top pulls the date label up into the clock's descender space.
+const DATE_OFFSET = -8;
 
 const BOTTOM_BAR_Y = screen.height - BOTTOM_BAR_HEIGHT;
 
@@ -82,7 +86,7 @@ export function getContents($) {
 							top: TIME_OFFSET, left: 0, right: 0,
 							contents: [
 								ClockLabel(null, { left: 0, right: 0 }),
-								DateLabel(null,  { left: 0, right: 0 }),
+								DateLabel(null,  { top: DATE_OFFSET, left: 0, right: 0 }),
 							],
 						}),
 					],

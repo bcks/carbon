@@ -30,9 +30,8 @@ class ClockBehavior extends Behavior {
 	 * @param {Date} date The new date object from the clock change event.
 	 */
 	onClockChanged(label, date) {
-		console.log("Clock changed:", date);
-		// @todo: 12 is displayed as 00
-		const h = String(date.getHours()).padStart(2, "0");
+		const hours = date.getHours();
+		const h = String(hours % 12 || 12);
 		const m = String(date.getMinutes()).padStart(2, "0");
 		label.string = `${h}:${m}`;
 	}
