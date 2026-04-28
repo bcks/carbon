@@ -35,7 +35,8 @@
     "build": "pebble build",
     "emulator:emery": "pebble install --emulator emery --logs",
     "emulator:gabbro": "pebble install --emulator gabbro --logs",
-    "device": "pebble install --cloudpebble"
+    "device": "pebble install --cloudpebble",
+    "fix-build": "echo '{}' > '~/Library/Application Support/Pebble SDK/settings.json'"
   },
   "devDependencies": {
     "@moddable/typings": "^8.0.1"
