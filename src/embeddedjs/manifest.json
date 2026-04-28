@@ -4,6 +4,21 @@
 		"$(MODDABLE)/examples/manifest_typings.json"
 	],
 	"modules": {
-		"*": "./main"
+		"*": [
+			"./main",
+			"./icons"
+		]
+	},
+	"resources": {
+		"*-alpha": [
+			{
+				"source": "./assets/IcoMoon-Regular",
+				"size": 20,
+				"monochrome": true,
+				"blocks": [
+					"Private Use Area"
+				]
+			}
+		]
 	}
 }

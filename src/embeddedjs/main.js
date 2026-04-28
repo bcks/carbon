@@ -1,24 +1,74 @@
-import Poco from "commodetto/Poco";
+import icons from "icons";
 
-console.log("Hello, Watchface.");
+// ---------------------------------------------------------------------------
+// Skins & styles
+// ---------------------------------------------------------------------------
 
-let render = new Poco(screen);
+const blackSkin = new Skin({ fill: "black" });
+const timeStyle = new Style({ font: "black 30px Bitham", color: "white" });
+const iconStyle = new Style({ font: "20px IcoMoon", color: "white" });
 
-const font = new render.Font("Bitham-Black", 30);
-const black = render.makeColor(0, 0, 0);
-const white = render.makeColor(255, 255, 255);
+// ---------------------------------------------------------------------------
+// Behaviors
+// ---------------------------------------------------------------------------
 
-function draw() {
-	render.begin();
-	render.fillRectangle(white, 0, 0, render.width, render.height);
-
-	const msg = (new Date).toTimeString().slice(0, 8);
-	const width = render.getTextWidth(msg, font);
-
-	render.drawText(msg, font, black,
-		(render.width - width) / 2, (render.height - font.height) / 2);
-
-	render.end();
+class CarbonBehavior {
+	onDisplaying(application) {
+		const now = new Date();
+		application.distribute("onClockChanged", { date: now });
+		watch.addEventListener("minutechange", (e) => {
+			application.distribute("onClockChanged", e);
+		});
+	}
+	onClockChanged(application, clock) {
+		const date = clock.date;
+		const h = String(date.getHours()).padStart(2, "0");
+		const m = String(date.getMinutes()).padStart(2, "0");
+		application.first.first.string = `${h}:${m}`;
+	}
 }
 
-watch.addEventListener('secondchange', draw);
+// ---------------------------------------------------------------------------
+// Test icons — one from each category
+// ---------------------------------------------------------------------------
+
+const TEST_ICONS = [
+	icons.sun,
+	icons.cloudRain,
+	icons.bluetooth,
+	icons.heartPulse,
+	icons.battery,
+];
+
+// ---------------------------------------------------------------------------
+// Application
+// ---------------------------------------------------------------------------
+
+const CarbonApplication = Application.template($ => ({
+	skin: blackSkin,
+	Behavior: CarbonBehavior,
+	contents: [
+		Column($, {
+			top: 0, bottom: 0, left: 0, right: 0,
+			contents: [
+				Label($, {
+					left: 0, right: 0,
+					style: timeStyle,
+					string: "00:00",
+				}),
+				Row($, {
+					left: 0, right: 0,
+					contents: TEST_ICONS.map(char =>
+						Label($, { style: iconStyle, string: char })
+					),
+				}),
+			],
+		}),
+	],
+}));
+
+export default new CarbonApplication(null, {
+	displayListLength: 2048,
+	touchCount: 0,
+	pixels: screen.width * 4,
+});
