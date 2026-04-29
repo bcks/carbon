@@ -8,7 +8,7 @@
  */
 
 import assets from "assets";
-import { getContents } from "layout";
+import { getContents } from "render";
 
 const backgroundSkin = new Skin(assets.skins.background);
 

@@ -1,14 +1,8 @@
 /**
- * Gabbro (Pebble Round 2) layout — circular screen (180×180).
+ * Gabbro (Pebble Round 2) layout constants.
  *
- * ProgressBar is a full-screen Port overlay rendered behind the Column,
- * so it does NOT live in the Column and CENTER_HEIGHT does not subtract
- * PROGRESS_HEIGHT.  The Column fills the full screen height.
- *
- * Exports
- * ───────
- * getContents($)  — returns the Application contents array for gabbro.
- * default         — frozen layout constants used by widget modules.
+ * Pure data — no Piu imports.  Other modules import this for section
+ * heights and arc-inset values.  Piu construction lives in render.js.
  *
  * @module layout
  *
@@ -18,14 +12,7 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import ClockLabel from "modules/clock";
-import DateLabel from "modules/date-label";
-import TopWidgetBar from "modules/top-widget-bar";
-import BottomWidgetBar from "modules/bottom-widget-bar";
-import PrecipGraph from "modules/precip-graph";
-import ProgressBar from "modules/progress-bar";
-
-// ─── Arc-inset helper ─────────────────────────────────────────────────────────
+// Arc-inset helper
 //
 // For a horizontal bar centred at yc, the usable half-chord is:
 //   half-chord = sqrt(r² – |r – yc|²)
@@ -39,12 +26,11 @@ function arcInset(barY, barH) {
 	return Math.ceil(r - Math.sqrt(Math.max(0, r * r - yDist * yDist)));
 }
 
-// ─── Section heights ──────────────────────────────────────────────────────────
+// Section heights
 //
 // On gabbro (260×260), bars are 36 px tall.
 //   r = 130, barCenter = 18 → yDist = 112 → half-chord ≈ 66 → inset ≈ 64 px
 //   usable width per bar ≈ 132 px (enough for 4 widget slots)
-
 const TOP_BAR_HEIGHT    = 36;
 const PRECIP_HEIGHT     = 30;
 const BOTTOM_BAR_HEIGHT = 36;
@@ -53,53 +39,9 @@ const PROGRESS_HEIGHT   = 4; // kept for layout.progressBar consumers; not used 
 // ProgressBar is an overlay, not a Column child — no PROGRESS_HEIGHT deducted.
 const CENTER_HEIGHT = screen.height - TOP_BAR_HEIGHT - PRECIP_HEIGHT - BOTTOM_BAR_HEIGHT;
 
-// Measured combined height of ClockLabel + DateLabel with current fonts.
-// Increase this value to reduce TIME_OFFSET (move clock up).
-const CLOCK_BLOCK_H = 150;
-const TIME_OFFSET   = Math.max(0, Math.floor((CENTER_HEIGHT - CLOCK_BLOCK_H) / 2));
-// Negative top pulls the date label up into the clock's descender space.
-const DATE_OFFSET = -8;
-
 const BOTTOM_BAR_Y = screen.height - BOTTOM_BAR_HEIGHT;
 
-// ─── Application contents ─────────────────────────────────────────────────────
-
-/**
- * Returns the Application contents array for the gabbro platform.
- * ProgressBar is placed FIRST so it renders behind the Column.
- *
- * @param {object} $ - Piu template data object passed down from Application.
- * @returns {Array} Piu content array.
- */
-export function getContents($) {
-	return [
-		// Arc progress bar: full-screen Port overlay, drawn behind everything.
-		ProgressBar($, {}),
-		Column($, {
-			top: 0, bottom: 0, left: 0, right: 0,
-			contents: [
-				TopWidgetBar($, {}),
-				PrecipGraph($, {}),
-				Column($, {
-					height: CENTER_HEIGHT, left: 0, right: 0,
-					contents: [
-						Column(null, {
-							top: TIME_OFFSET, left: 0, right: 0,
-							contents: [
-								ClockLabel(null, { left: 0, right: 0 }),
-								DateLabel(null,  { top: DATE_OFFSET, left: 0, right: 0 }),
-							],
-						}),
-					],
-				}),
-				BottomWidgetBar($, {}),
-			],
-		}),
-	];
-}
-
-// ─── Layout constants (used by widget modules via `import layout`) ────────────
-
+// Frozen layout constants
 const layout = Object.freeze({
 	isRound: true,
 	topBar: Object.freeze({
@@ -110,8 +52,7 @@ const layout = Object.freeze({
 		height: PRECIP_HEIGHT,
 	}),
 	center: Object.freeze({
-		height:     CENTER_HEIGHT,
-		timeOffset: TIME_OFFSET,
+		height: CENTER_HEIGHT,
 	}),
 	bottomBar: Object.freeze({
 		height: BOTTOM_BAR_HEIGHT,

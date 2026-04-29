@@ -14,16 +14,16 @@
  */
 
 import layout from "layout";
-import { WidgetBar } from "modules/widget-bar";
+import { makeSlots } from "modules/widget-bar";
 
+const SLOT_HEIGHT = layout.bottomBar.height;
 // 4 equal-width slots across the full bar width.
 const SLOT_WIDTH = Math.floor(screen.width / 4);
 
-const BottomWidgetBar = WidgetBar.template($ => ({
-	height: layout.bottomBar.height,
+const BottomWidgetBar = Row.template($ => ({
+	height: SLOT_HEIGHT,
 	left: 0, right: 0,
-	slots: $.bottomWidgets,
-	slotWidth: SLOT_WIDTH,
+	contents: makeSlots($.bottomWidgets, SLOT_WIDTH, SLOT_HEIGHT),
 }));
 
 export default BottomWidgetBar;

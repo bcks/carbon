@@ -1,13 +1,8 @@
 /**
- * Emery (Pebble Time 2) layout — rectangular screen (144×168).
+ * Emery (Pebble Time 2) layout constants.
  *
- * No arc maths needed.  ProgressBar lives as the last child of the
- * single Column, so CENTER_HEIGHT accounts for its height.
- *
- * Exports
- * ───────
- * getContents($)  — returns the Application contents array for emery.
- * default         — frozen layout constants used by widget modules.
+ * Pure data — no Piu imports.  Other modules import this for section
+ * heights and inset values.  Piu construction lives in render.js.
  *
  * @module layout
  *
@@ -17,15 +12,7 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import ClockLabel from "modules/clock";
-import DateLabel from "modules/date-label";
-import TopWidgetBar from "modules/top-widget-bar";
-import BottomWidgetBar from "modules/bottom-widget-bar";
-import PrecipGraph from "modules/precip-graph";
-import ProgressBar from "modules/progress-bar";
-
-// ─── Section heights ─────────────────────────────────────────────────────────
-
+// Section heights
 const TOP_BAR_HEIGHT    = 22;
 const PRECIP_HEIGHT     = 28;
 const BOTTOM_BAR_HEIGHT = 22;
@@ -34,50 +21,7 @@ const PROGRESS_HEIGHT   = 4;
 // ProgressBar is the last Column child, so subtract its height here.
 const CENTER_HEIGHT = screen.height - TOP_BAR_HEIGHT - PRECIP_HEIGHT - BOTTOM_BAR_HEIGHT - PROGRESS_HEIGHT;
 
-// Measured combined height of ClockLabel + DateLabel with current fonts.
-// Increase this value to reduce TIME_OFFSET (move clock up).
-const CLOCK_BLOCK_H = 140;
-const TIME_OFFSET   = Math.max(0, Math.floor((CENTER_HEIGHT - CLOCK_BLOCK_H) / 2));
-// Negative top pulls the date label up into the clock's descender space.
-const DATE_OFFSET = -8;
-
-// ─── Application contents ────────────────────────────────────────────────────
-
-/**
- * Returns the Application contents array for the emery platform.
- * Single full-height Column; ProgressBar is the last child.
- *
- * @param {object} $ - Piu template data object passed down from Application.
- * @returns {Array} Piu content array.
- */
-export function getContents($) {
-	return [
-		Column($, {
-			top: 0, bottom: 0, left: 0, right: 0,
-			contents: [
-				TopWidgetBar($, {}),
-				PrecipGraph($, {}),
-				Column($, {
-					height: CENTER_HEIGHT, left: 0, right: 0,
-					contents: [
-						Column(null, {
-							top: TIME_OFFSET, left: 0, right: 0,
-							contents: [
-								ClockLabel(null, { left: 0, right: 0 }),
-								DateLabel(null,  { top: DATE_OFFSET, left: 0, right: 0 }),
-							],
-						}),
-					],
-				}),
-				BottomWidgetBar($, {}),
-				ProgressBar($, {}),
-			],
-		}),
-	];
-}
-
-// ─── Layout constants (used by widget modules via `import layout`) ────────────
-
+// Frozen layout constants
 const layout = Object.freeze({
 	isRound: false,
 	topBar: Object.freeze({
@@ -88,8 +32,7 @@ const layout = Object.freeze({
 		height: PRECIP_HEIGHT,
 	}),
 	center: Object.freeze({
-		height:     CENTER_HEIGHT,
-		timeOffset: TIME_OFFSET,
+		height: CENTER_HEIGHT,
 	}),
 	bottomBar: Object.freeze({
 		height: BOTTOM_BAR_HEIGHT,

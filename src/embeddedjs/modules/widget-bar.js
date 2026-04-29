@@ -27,22 +27,49 @@
 const DEFAULT_SLOT_WIDTH = 40;
 
 /**
- * Builds a fixed-width slot Content wrapping an on-demand-loaded widget.
- * Returns a plain spacer when `spec` is null.
+ * Builds a single fixed-width slot wrapping an on-demand-loaded widget.
+ * Returns a plain spacer Content when `spec` is null.
+ *
+ * NOTE: Uses `Column` (not `Content`) as the wrapper because `Content` is a
+ * leaf node in Piu and silently ignores a `contents` array.
  */
 function makeSlot(spec, slotWidth, height) {
 	if (!spec) {
 		return Content(null, { width: slotWidth, height });
 	}
 	const Widget = importNow("widgets/" + spec.name).default;
-	return Content(null, {
+	return Column(null, {
 		width: slotWidth, height,
-		contents: [ Widget(spec.config || null, {}) ],
+		contents: [ Widget(spec?.config ?? null, {}) ],
 	});
 }
 
+/**
+ * Maps a slots array to Piu content objects.
+ *
+ * Exported so platform-specific bar templates can call it directly from their
+ * own template functions.  Piu template chaining passes the ORIGINAL data `$`
+ * to every function in the chain, so a derived template cannot feed new
+ * values into a base template's function — each platform bar must therefore
+ * own its `contents` computation rather than relying on WidgetBar's.
+ *
+ * @param {Array}  slots      Array of `{ name, config } | null` descriptors.
+ * @param {number} slotWidth  Pixel width of each slot.
+ * @param {number} height     Pixel height of each slot.
+ * @returns {Array}  Array of Piu Content objects ready for a `contents:` key.
+ */
+export function makeSlots(slots, slotWidth, height) {
+	return (slots || []).map(spec =>
+		makeSlot(spec, slotWidth || DEFAULT_SLOT_WIDTH, height)
+	);
+}
+
+/**
+ * Generic WidgetBar template.  Works when called with data shaped as
+ * `{ slots, slotWidth, height }`.  Platform bars extend this only if they
+ * pass the right data shape; otherwise use `makeSlots` directly.
+ */
 export const WidgetBar = Row.template($ => ({
-	contents: ($.slots || []).map(spec =>
-		makeSlot(spec, $.slotWidth || DEFAULT_SLOT_WIDTH, $.height)
-	),
+	height: $.height,
+	contents: makeSlots($.slots, $.slotWidth, $.height),
 }));
