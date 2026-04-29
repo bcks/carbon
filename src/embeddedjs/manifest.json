@@ -5,6 +5,7 @@
 	],
 	"modules": {
 		"modules/*": "./modules/*",
+		"modules/icons/library": "./modules/icons/library",
 		"widgets/*": "./widgets/*",
 		"*": [
 			"./main",
@@ -15,13 +16,19 @@
 		"*/emery": {
 			"modules": {
 				"modules/*": "./emery/modules/*",
-				"layout": "./emery/layout"
+				"*": [
+					"./emery/layout",
+					"./emery/render"
+				]
 			}
 		},
 		"*/gabbro": {
 			"modules": {
 				"modules/*": "./gabbro/modules/*",
-				"layout": "./gabbro/layout"
+				"*": [
+					"./gabbro/layout",
+					"./gabbro/render"
+				]
 			}
 		}
 	},

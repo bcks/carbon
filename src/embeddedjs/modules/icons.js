@@ -1,14 +1,13 @@
 /**
  * Icons
  *
- * Re-exports the full icon library as named exports and provides the
- * IconLabel template.  Import individual symbols from this module rather
- * than from "modules/icons/library" directly so future changes to the
- * underlying file only need updating here.
+ * Provides the `IconLabel` template — a Label with the IcoMoon icon font
+ * style pre-applied.  Import icon codepoints directly from
+ * "modules/icons/library" (generated file) wherever they are needed.
  *
  * Usage:
  *   import { IconLabel } from "modules/icons";
- *   import { battery, batteryFull } from "modules/icons";
+ *   import { battery, batteryFull } from "modules/icons/library";
  *
  * @module icons
  *
@@ -19,8 +18,6 @@
  */
 
 import assets from "assets";
-
-export * from "./icons/library";
 
 const iconStyle = new Style(assets.styles.icons);
 
