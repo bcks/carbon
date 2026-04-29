@@ -61,6 +61,7 @@ npm run device
 ### Project Structure
 
 ```
+scripts/           # Utility scripts (e.g. icon reference generation)
 src/
   embeddedjs/      # Watch-side JavaScript (runs on device)
     assets/        # Fonts and other static resources
@@ -75,23 +76,29 @@ src/
 
 ### Icons
 
-Icons are included as a custom font generated from [IcoMoon](https://icomoon.io/). The `src/embeddedjs/assets/icons.icomoon.json` file can be imported into IcoMoon to edit the icon set. When icons are added, removed, or rearranged, the font must be re-exported from IcoMoon (with font family set to "IcoMoon" and ligatures enabled), and both the TTF and the JSON selection file must be replaced.
+Icons are included as a custom font generated from [IcoMoon](https://icomoon.io/). The `src/embeddedjs/assets/icons.icomoon.json` file can be imported into IcoMoon to edit the icon set. When icons are added, removed, or rearranged, the font must be re-exported from IcoMoon (with font family set to "IcoMoon"), and both the TTF and the JSON selection file must be replaced.
 
-Move the downloaded TTF font file to `src/embeddedjs/assets/IcoMoon-Regular.ttf` (the `-Regular` suffix is important!) and the JSON selection file to `src/embeddedjs/assets/icons.icomoon.json`.
+Move the downloaded TTF font file to `src/embeddedjs/assets/IcoMoon-Regular.ttf` (the `-Regular` suffix is important!) and the JSON selection file to `src/embeddedjs/assets/icons.icomoon.json`, then regenerate the reference table:
 
-`src/embeddedjs/modules/icons.js` exports the `IconLabel` template — a `Label` with the icon font style pre-applied. Use icon names as ligature strings directly on the `string` property:
+```sh
+npm run gen-icon-ref
+```
+
+This regenerates `ICONS.md` — a human-readable lookup table of icon names and their Unicode codepoints. Consult it whenever you need to use an icon.
+
+`src/embeddedjs/modules/icons.js` exports the `IconLabel` template — a `Label` with the icon font style pre-applied. Use the codepoint string directly on the `string` property:
 
 ```js
 import { IconLabel } from "modules/icons";
 
 // In a template:
-const Widget = IconLabel.template($ => ({ string: "battery" }));
+const Widget = IconLabel.template($ => ({ string: "\uF346" })); // battery
 
 // Or at runtime:
-label.string = "battery-charging";
+label.string = "\uF38E"; // battery-charging
 ```
 
-Ligature names are the kebab-case icon names as they appear in the IcoMoon selection JSON (e.g. `"battery"`, `"battery-charging"`, `"bluetooth-off"`). Because these are plain string literals rather than property names, they consume no XSA symbol table slots.
+Because codepoints are plain string *values* rather than property *key names*, they consume no XSA symbol table slots. I wanted to use ligature substitution to make things easier, but the font is compiled to a monochrome bitmap at build time; ligature substitution is not available on device.
 
 ### XS VM Memory (`src/c/mdbl.c`)
 
@@ -174,11 +181,11 @@ print(f'{count} symbols')
 
 | Cause | Slots consumed | Fix |
 |---|---|---|
-| Named `export const` icon library | 62 (one per name) | Use font ligature strings instead — `label.string = "battery-charging"` |
+| Named `export const` icon library | 62 (one per name) | Use Unicode codepoint string literals instead — see `ICONS.md` |
 | `import { Container } from "piu/All"` | ~10+ new names | Use the Piu globals (`Column`, `Row`, etc.) injected by the host instead |
 | Extra local variable names | 1 per unique name | Reuse existing names or inline expressions |
 
-The icon ligature approach (used in this project) is the highest-leverage fix: icon names are plain string *values*, not property *keys*, so they contribute zero symbols to the table.
+The codepoint string approach (used in this project) is the highest-leverage fix: codepoints are plain string *values*, not property *key names*, so they contribute zero symbols to the table.
 
 #### Build environment: settings.json
 

@@ -20,11 +20,11 @@ import { IconLabel } from "modules/icons";
 console.log("Battery widget loaded");
 
 function batteryIcon(sample) {
-	if (sample.charging)     return "battery-charging";
-	if (sample.percent > 80) return "battery-full";
-	if (sample.percent > 40) return "battery-medium";
-	if (sample.percent > 20) return "battery-low";
-	return "battery-warning";
+	if (sample.charging)     return "\uF38E"; // battery-charging
+	if (sample.percent > 80) return "\uF318"; // battery-full
+	if (sample.percent > 40) return "\uF390"; // battery-medium
+	if (sample.percent > 20) return "\uF261"; // battery-low
+	return "\uF431"; // battery-warning
 }
 
 class BatteryBehavior extends Behavior {
@@ -42,7 +42,7 @@ class BatteryBehavior extends Behavior {
 
 const BatteryWidget = IconLabel.template($ => ({
 	Behavior: BatteryBehavior,
-	string: "battery",
+	string: "\uF346", // battery
 }));
 
 export default BatteryWidget;

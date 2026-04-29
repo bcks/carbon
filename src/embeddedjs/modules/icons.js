@@ -2,12 +2,13 @@
  * Icons
  *
  * Provides the `IconLabel` template — a Label with the IcoMoon icon font
- * style pre-applied.  Use kebab-case ligature strings as the `string` value.
+ * style pre-applied.  Use Unicode codepoint strings as the `string` value.
+ * See ICONS.md for the full codepoint reference.
  *
  * Usage:
  *   import { IconLabel } from "modules/icons";
- *   IconLabel.template($ => ({ string: "battery" }))
- *   label.string = "battery-charging";
+ *   IconLabel.template($ => ({ string: "\uF346" }))  // battery
+ *   label.string = "\uF38E"; // battery-charging
  *
  * @module icons
  *
@@ -24,7 +25,7 @@ const iconStyle = new Style(assets.styles.icons);
 /**
  * Label template with the icon font style baked in.
  *
- * Usage: IconLabel($, { string: battery })
+ * Usage: IconLabel($, { string: "\uF346" })  // see ICONS.md for codepoints
  */
 export const IconLabel = Label.template($ => ({
 	style: iconStyle,

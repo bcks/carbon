@@ -18,10 +18,10 @@ const backgroundSkin = new Skin(assets.skins.background);
 
 const widgetConfig = {
 	topWidgets: [
-		{ name: "battery",   config: {} },
 		{ name: "bluetooth", config: {} },
 		null,
 		null,
+		{ name: "battery",   config: {} },
 	],
 	bottomWidgets: [
 		null,
