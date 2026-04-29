@@ -14,14 +14,16 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import icons, { IconLabel } from "modules/icons";
+import { IconLabel,
+	battery, batteryCharging, batteryFull, batteryMedium, batteryLow, batteryWarning,
+} from "modules/icons";
 
 function batteryIcon(state) {
-	if (state.charging)     return icons.batteryCharging;
-	if (state.percent > 80) return icons.batteryFull;
-	if (state.percent > 40) return icons.batteryMedium;
-	if (state.percent > 20) return icons.batteryLow;
-	return icons.batteryWarning;
+	if (state.charging)     return batteryCharging;
+	if (state.percent > 80) return batteryFull;
+	if (state.percent > 40) return batteryMedium;
+	if (state.percent > 20) return batteryLow;
+	return batteryWarning;
 }
 
 class BatteryBehavior extends Behavior {
@@ -35,7 +37,7 @@ class BatteryBehavior extends Behavior {
 
 const BatteryWidget = IconLabel.template($ => ({
 	Behavior: BatteryBehavior,
-	string: icons.battery,
+	string: battery,
 }));
 
 export default BatteryWidget;

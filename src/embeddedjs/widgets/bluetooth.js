@@ -14,20 +14,20 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import icons, { IconLabel } from "modules/icons";
+import { IconLabel, bluetooth, bluetoothOff } from "modules/icons";
 
 class BluetoothBehavior extends Behavior {
 	onCreate(label, data) {
-		label.string = watch.bluetooth.connected ? icons.bluetooth : icons.bluetoothOff;
+		label.string = watch.bluetooth.connected ? bluetooth : bluetoothOff;
 		watch.bluetooth.addEventListener("connectionchange", (e) => {
-			label.string = e.connected ? icons.bluetooth : icons.bluetoothOff;
+			label.string = e.connected ? bluetooth : bluetoothOff;
 		});
 	}
 }
 
 const BluetoothWidget = IconLabel.template($ => ({
 	Behavior: BluetoothBehavior,
-	string: icons.bluetooth,
+	string: bluetooth,
 }));
 
 export default BluetoothWidget;

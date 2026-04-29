@@ -23,15 +23,26 @@ npm install
 
 ### Build & run in emulator
 
+There are two build modes:
+
+| Script | Description |
+|---|---|
+| `npm run build` | Release build — no instrumentation logging |
+| `npm run build:dev` | Development build — enables Alloy instrumentation logging via `ALLOY_INSTRUMENTATION=1` |
+| `npm run build-run:emery` | Dev build + launch in Pebble Time 2 emulator with logs |
+| `npm run build-run:gabbro` | Dev build + launch in Pebble Round 2 emulator with logs |
+
+To run a release build in the emulator without rebuilding:
+
 ```sh
-npm run build
+# Pebble Time 2 (rectangular, 200×228)
+pebble install --emulator emery --logs
 
-# Pebble Time 2 (rectangular)
-npm run emulator:emery
-
-# Pebble Round 2 (circular)
-npm run emulator:gabbro
+# Pebble Round 2 (circular, 260×260)
+pebble install --emulator gabbro --logs
 ```
+
+The `ALLOY_INSTRUMENTATION` flag is consumed by `wscript` (the Waf build script) and passed to the C compiler as `-DALLOY_INSTRUMENTATION=1`, which enables `kModdableCreationFlagLogInstrumentation` in `src/c/mdbl.c`. This causes the XS virtual machine to emit heap usage statistics over the Pebble log output on startup.
 
 ### Install on your device
 
@@ -65,7 +76,7 @@ src/
 
 ### Icons
 
-Icons are included as a custom font generated from [IcoMoon](https://icomoon.io/). The `src/embeddedjs/assets/icons.icomoon.json` file can be imported into IcoMoon to edit the icon set. When icons are added, removed, or rearranged, the font and selection JSON file must be re-exported from IcoMoon (with font family set to "IcoMoon"), and the codepoints file must be regenerated.
+Icons are included as a custom font generated from [IcoMoon](https://icomoon.io/). The `src/embeddedjs/assets/icons.icomoon.json` file can be imported into IcoMoon to edit the icon set. When icons are added, removed, or rearranged, the font and selection JSON file must be re-exported from IcoMoon (with font family set to "IcoMoon"), and the icon library must be regenerated.
 
 Move the downloaded TTF font file to `src/embeddedjs/assets/IcoMoon-Regular.ttf` (the `-Regular` suffix is important!) and the JSON selection file to `src/embeddedjs/assets/icons.icomoon.json`, then run:
 
