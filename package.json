@@ -33,8 +33,9 @@
     "clean": "rm -rf build",
     "gen-icons": "node scripts/gen-icons.js",
     "build": "pebble build",
-    "emulator:emery": "pebble install --emulator emery --logs",
-    "emulator:gabbro": "pebble install --emulator gabbro --logs",
+    "build:dev": "ALLOY_INSTRUMENTATION=1 npm run build",
+    "build-run:emery": "npm run build:dev && pebble install --emulator emery --logs",
+    "build-run:gabbro": "npm run build:dev && pebble install --emulator gabbro --logs",
     "device": "pebble install --cloudpebble",
     "fix-build": "echo '{}' > '~/Library/Application Support/Pebble SDK/settings.json'"
   },
