@@ -14,12 +14,11 @@
  */
 
 import assets from "assets";
-import layout from "layout";
 
 const graphSkin = new Skin(assets.skins.graph);
 
 const PrecipGraph = Content.template($ => ({
-	height: layout.precipGraph.height,
+	height: 28,
 	left: 0, right: 0,
 	skin: graphSkin,
 }));

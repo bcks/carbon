@@ -8,7 +8,7 @@
  */
 
 import assets from "assets";
-import { getContents } from "render";
+import Layout from "layout";
 
 const backgroundSkin = new Skin(assets.skins.background);
 
@@ -18,9 +18,9 @@ const backgroundSkin = new Skin(assets.skins.background);
 
 const widgetConfig = {
 	// 5 slots per bar.
+	// Emery:         single row, left-to-right, slots 0-4
 	// Gabbro top:    row 1 = slots 0-1 (2 wide), row 2 = slots 2-4 (3 wide)
 	// Gabbro bottom: row 1 = slots 0-2 (3 wide), row 2 = slots 3-4 (2 wide)
-	// Emery:         single row, left-to-right, slots 0-4
 	topWidgets: [
 		{ name: "bluetooth",   config: {} },
 		{ name: "placeholder", config: { string: "22", text: true } },
@@ -56,7 +56,11 @@ class CarbonBehavior extends Behavior {
 const CarbonApplication = Application.template($ => ({
 	skin: backgroundSkin,
 	Behavior: CarbonBehavior,
-	contents: getContents($),
+	contents: [
+		Layout($, {
+			top: 0, left: 0, right: 0, bottom: 0,
+		}),
+	],
 }));
 
 export default new CarbonApplication(widgetConfig, {

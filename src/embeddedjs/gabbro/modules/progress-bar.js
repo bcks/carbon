@@ -2,13 +2,13 @@
  * Gabbro arc progress bar
  *
  * A full-screen Port overlay drawn BEHIND other content (place first in
- * Application contents).  Uses a standalone Poco renderer to draw two
+ * Application contents). Uses a standalone Poco renderer to draw two
  * concentric arcs — track (full bottom semicircle) then fill on top.
  *
  * Drawing model
  * ─────────────
  * `drawCircle` draws a filled sector/disk, so the ring is rendered in 3 steps:
- *   1. Track  — filled half-disk at radii R-4…R-1 (track color)
+ *   1. Track  — filled half-disk at radii R (track color)
  *   2. Fill   — filled arc sector at same radii (fill color, overwrites track)
  *   3. Hollow — filled half-disk at radius R-BAR_THICKNESS-1 (background color)
  *              This punches out the inner hole to create the annular ring.
@@ -16,7 +16,7 @@
  * Rendering note
  * ──────────────
  * Poco is called INSIDE Port's onDraw (which is itself inside Piu's render
- * pass).  Our render.begin()/end() flushes the arc to the frame buffer first;
+ * pass). Our render.begin()/end() flushes the arc to the frame buffer first;
  * Piu then draws the Column (clock, widget bars) on top.  ProgressBar must
  * remain the FIRST item in Application.contents so it is the lowest z-layer.
  *

@@ -22,42 +22,51 @@
 
 import WidgetBar from "modules/widget-bar";
 import assets from "assets";
-import layout from "layout";
 
 const bottomBarStyle = new Style(assets.styles.icons);
 
-export default class BottomWidgetBar extends WidgetBar {
+const BottomWidgetBarTemplate = Column.template($ => ({
+	Behavior: $.constructor.Behavior,
+	style: bottomBarStyle,
+	contents: [
+		Row($, {
+			anchor: "TOP_ROW",
+			height: Math.floor($.height / 2),
+			// inset for 3-slot row
+			left: Math.floor((screen.width - (screen.width / 4) * 3) / 2),
+			right: Math.floor((screen.width - (screen.width / 4) * 3) / 2),
+		}),
+		Row($, {
+			anchor: "BOTTOM_ROW",
+			height: Math.floor($.height / 2),
+			// inset for 2-slot row
+			left: Math.floor((screen.width - (screen.width / 4) * 2) / 2),
+			right: Math.floor((screen.width - (screen.width / 4) * 2) / 2),
+		}),
+	]
+}));
+
+class BottomWidgetBar extends WidgetBar {
 	constructor() {
-		super({
-			...layout.bottomBar,
-			slotHeight: Math.floor(layout.bottomBar.height / 2) - 4,
-			offset:	    layout.bottomBar.offset,
-			style:      bottomBarStyle,
-		});
+		console.log("Initializing BottomWidgetBar");
+		super();
 	}
 
-	render(slots) {
-		const rowH  = this._slotHeight;
+	get Template() { return BottomWidgetBarTemplate; }
+
+	renderSlots( container, slots ) {
 		const slotW = Math.floor(screen.width / 4);
-		const in3   = Math.floor((screen.width - slotW * 3) / 2); // inset for 3-slot row
-		const in2   = Math.floor((screen.width - slotW * 2) / 2); // inset for 2-slot row
-		const dict  = {
-			top: this._offset,
-			left: this._inset,
-			right: this._inset,
-			height: this._height,
-		};
-		if (this._style) dict.style = this._style;
-		dict.contents = [
-			Row(null, {
-				left: in3, right: in3, height: rowH,
-				contents: (slots ?? []).slice(0, 3).map(s => this._makeSlot(s, slotW, rowH)),
-			}),
-			Row(null, {
-				left: in2, right: in2, height: rowH,
-				contents: (slots ?? []).slice(3, 5).map(s => this._makeSlot(s, slotW, rowH)),
-			}),
-		];
-		return Column(null, dict);
+		const slotH = container.height / 2;
+		// slots.forEach(spec => this.makeSlot(spec, container, slotW, slotH));
+		// Row 1: slots 0-2
+		const topRow = container.TOP_ROW;
+		(slots ?? []).slice(0, 3).forEach(spec => this.makeSlot(spec, topRow, slotW, slotH));
+		// Row 2: slots 3-4
+		const bottomRow = container.BOTTOM_ROW;
+		(slots ?? []).slice(3, 5).forEach(spec => this.makeSlot(spec, bottomRow, slotW, slotH));
 	}
 }
+
+Object.freeze(BottomWidgetBar);
+
+export default BottomWidgetBar;

@@ -14,13 +14,14 @@
  * Widget modules are loaded on demand via `importNow()` so unused widgets
  * never occupy memory.
  *
- * Subclasses supply bar-specific constructor parameters (height, slotWidth,
- * skin, style, inset) and may override `render()` for platform-specific
- * layout (e.g. gabbro arc-chord clipping).
+ * Subclasses override `get Template()` to return a Piu template constructor
+ * appropriate for the platform (e.g. a single Row for emery, a two-row
+ * Column for gabbro).  Layout props such as height, skin, and style belong
+ * in the subclass template rather than the constructor.
  *
- * Note: `Column` is used as the slot wrapper rather than `Container` because
- * `Container` requires a native host binding that is not registered on all
- * Pebble platforms. For a single-child slot, `Column` is equivalent.
+ * The _makeSlot() helper instantiates a widget by calling
+ * widget.Template(config, { width, height }) on the singleton exported by
+ * each widget module.
  *
  * @module widget-bar
  *
@@ -30,60 +31,66 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-export default class WidgetBar {
-	/**
-	 * @param {object} options
-	 * @param {number} options.height              - Bar height in pixels.
-	 * @param {number} [options.slotWidth]         - Width of each slot. Defaults to screen.width.
-	 * @param {number} [options.slotHeight]        - Height of each slot. Defaults to `height`.
-	 * @param {Skin}   [options.skin=null]         - Background skin for the bar container.
-	 * @param {Style}  [options.style=null]        - Label style inherited by slot contents.
-	 * @param {number} [options.inset=0]           - Horizontal inset (px) for circular screens.
-	 */
-	constructor({ height, slotWidth = screen.width, slotHeight, skin = null, style = null, inset = 0, offset = 0, padding = 0 }) {
-		this._height     = height;
-		this._slotWidth  = slotWidth;
-		this._slotHeight = slotHeight ?? height;
-		this._skin       = skin;
-		this._style      = style;
-		this._inset      = inset;
-		this._offset     = offset;
-		this._padding    = padding;
+class WidgetBarBehavior extends Behavior {
+	onCreate(container, data) {
+		this.data = data;
 	}
 
-	_makeSlot(spec, slotW = this._slotWidth, slotH = this._slotHeight) {
-		if (!spec) {
-			return Content(null, { top: this._padding, width: slotW, height: slotH });
-		}
-		const Widget = importNow("widgets/" + spec.name).default;
-		const dict = {
-			top:      this._padding,
-			width:    slotW,
-			height:   slotH,
-			contents: [ Widget(spec.config ?? null, {}) ],
-		};
-		if (this._style) dict.style = this._style;
-		return Column(null, dict);
-	}
+	onDisplaying(container) {
+		console.log(`${this.constructor.name} onDisplaying with data:`, JSON.stringify(this.data));
 
-	/**
-	 * Builds the bar from an array of slot descriptors.
-	 *
-	 * Override in subclasses to apply platform-specific geometry
-	 * (e.g. multi-row layout on gabbro).
-	 *
-	 * @param   {Array} slots  Array of `{ name, config } | null` descriptors.
-	 * @returns {Row}   Piu Row content.
-	 */
-	render(slots) {
-		const dict = {
-			top:    this._offset,
-			left:   this._inset,
-			right:  this._inset,
-			height: this._height,
-			contents: (slots ?? []).map(spec => this._makeSlot(spec)),
-		};
-		if (this._skin) dict.skin = this._skin;
-		return Row(null, dict);
+		// Add widget slots to the container based on the provided data
+		this.renderSlots(container, this.data ?? []);
 	}
 }
+
+// Default container template for a widget bar (overridden by subclasses)
+export const WidgetBarTemplate = Row.template($ => ({
+	Behavior: $.constructor.Behavior,
+	left: 0, right: 0, height: 24,
+}));
+
+class WidgetBar {
+
+	static get Behavior() { return WidgetBarBehavior; }
+
+	/**
+	 * Returns the Piu template constructor for this bar.
+	 * Subclasses override to provide their platform-specific layout.
+	 * Called as: bar.Template(slots, {})
+	 */
+	get Template() { return WidgetBarTemplate; }
+
+	renderSlots( container, slots ) {
+		const slotW = Math.floor(container.width / 5); // Assuming 5 slots max
+		const slotH = container.height;
+		slots.forEach(spec => this.makeSlot(spec, container, slotW, slotH));
+	}
+
+	/**
+	 * Builds a single slot from a descriptor, sizing it to slotW × slotH.
+	 *
+	 * @param   {object|null} spec    `{ name, config }` descriptor or null (spacer).
+	 * @param   {Content}     container The parent container to add the slot to.
+	 * @param   {number}      slotW   Slot width in pixels.
+	 * @param   {number}      slotH   Slot height in pixels.
+	 * @returns {Content}     Piu content for the slot.
+	 */
+	makeSlot(spec, container, slotW, slotH) {
+		if (spec) {
+			const Widget = importNow("widgets/" + spec.name).default;
+			if ( Widget ) {
+				const widget = new Widget(spec?.config);
+				console.log(`WidgetBar: loading widget "${spec.name}" with config:`, spec.config);
+				container.add(new widget.Template(widget, { width: slotW, height: slotH }));
+			}
+		}
+
+		// Spacer slot (empty content)
+		container.add(new Content(null, { width: slotW, height: slotH }));
+	}
+}
+
+Object.freeze(WidgetBar);
+
+export default WidgetBar;

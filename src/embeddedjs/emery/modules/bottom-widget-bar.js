@@ -12,18 +12,24 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import WidgetBar from "modules/widget-bar";
 import assets from "assets";
-import layout from "layout";
+import WidgetBar, { WidgetBarTemplate } from "modules/widget-bar";
 
 const bottomBarStyle = new Style(assets.styles.icons);
 
-export default class BottomWidgetBar extends WidgetBar {
+const BottomWidgetBarTemplate = WidgetBarTemplate.template($ => ({
+	style: bottomBarStyle,
+}));
+
+class BottomWidgetBar extends WidgetBar {
 	constructor() {
-		super({
-			...layout.bottomBar,
-			slotWidth: Math.floor(screen.width / 5),
-			style:     bottomBarStyle,
-		});
+		console.log("Initializing BottomWidgetBar");
+		super();
 	}
+
+	get Template() { return BottomWidgetBarTemplate; }
 }
+
+Object.freeze(BottomWidgetBar);
+
+export default BottomWidgetBar;

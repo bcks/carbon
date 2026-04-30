@@ -19,41 +19,26 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import WidgetBar from "modules/widget-bar";
 import assets from "assets";
-import layout from "layout";
+import WidgetBar, { WidgetBarTemplate } from "modules/widget-bar";
 
 const topBarSkin  = new Skin(assets.skins.topBar);
 const topBarStyle = new Style(assets.styles.icons);
 
-export default class TopWidgetBar extends WidgetBar {
+const TopWidgetBarTemplate = WidgetBarTemplate.template($ => ({
+	skin: topBarSkin,
+	style: topBarStyle,
+}));
+
+class TopWidgetBar extends WidgetBar {
 	constructor() {
-		super({
-			...layout.topBar,
-			slotHeight: Math.floor(layout.topBar.height / 2),
-			skin:       topBarSkin,
-			style:      topBarStyle,
-		});
+		console.log("Initializing TopWidgetBar");
+		super();
 	}
 
-	render(slots) {
-		const rowH  = this._slotHeight;
-		const slotW = Math.floor(screen.width / 4);
-		const in2   = Math.floor((screen.width - slotW * 2) / 2); // inset for 2-slot row
-		const in3   = Math.floor((screen.width - slotW * 3) / 2); // inset for 3-slot row
-		const dict  = { left: 0, right: 0, height: this._height };
-		if (this._skin)  dict.skin  = this._skin;
-		if (this._style) dict.style = this._style;
-		dict.contents = [
-			Row(null, {
-				top: 8, left: in2, right: in2, height: rowH,
-				contents: (slots ?? []).slice(0, 2).map(s => this._makeSlot(s, slotW, rowH)),
-			}),
-			Row(null, {
-				left: in3, right: in3, height: rowH,
-				contents: (slots ?? []).slice(2, 5).map(s => this._makeSlot(s, slotW, rowH)),
-			}),
-		];
-		return Column(null, dict);
-	}
+	get Template() { return TopWidgetBarTemplate; }
 }
+
+Object.freeze(TopWidgetBar);
+
+export default TopWidgetBar;

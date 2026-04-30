@@ -15,7 +15,6 @@
  */
 
 import assets from "assets";
-import layout from "layout";
 
 class ProgressBarBehavior extends Behavior {
 	onCreate(port, data) {
@@ -43,7 +42,7 @@ class ProgressBarBehavior extends Behavior {
 // Absolute overlay anchored to the bottom of the screen.
 const ProgressBar = Port.template($ => ({
 	bottom: 0, left: 0, right: 0,
-	height: layout.progressBar.height,
+	height: 4, // stub height
 	Behavior: ProgressBarBehavior,
 }));
 

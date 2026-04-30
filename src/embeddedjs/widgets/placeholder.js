@@ -17,15 +17,22 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
+import Widget from "modules/widget";
 import assets from "assets";
 
 const iconStyle = new Style(assets.styles.icons);
 const dateStyle = new Style(assets.styles.date);
 
-const Placeholder = Label.template($ => ({
+// Template created once at module init — never inside a getter or template body.
+const PlaceholderTemplate = Label.template($ => ({
 	top:    $.text ? -3 : 0, // nudge up to better align with icons
 	string: $.string ?? "\uF350", // thermometer by default
 	style:  $.text ? dateStyle : iconStyle,
 }));
 
-export default Placeholder;
+class PlaceholderWidget extends Widget {
+	get Template() { return PlaceholderTemplate; }
+}
+
+Object.freeze(PlaceholderWidget);
+export default new PlaceholderWidget();

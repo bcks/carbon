@@ -15,7 +15,9 @@
  */
 
 import Battery from "embedded:sensor/Battery";
+
 import { IconLabel } from "modules/icons";
+import Widget from "modules/widget";
 
 console.log("Battery widget loaded");
 
@@ -27,8 +29,9 @@ function batteryIcon(sample) {
 	return "\uF431"; // battery-warning
 }
 
-class BatteryBehavior extends Behavior {
+class BatteryBehavior extends Widget.Behavior {
 	onCreate(label, data) {
+		super.onCreate(label, data);
 		this.sensor = new Battery({
 			onSample() {
 				label.string = batteryIcon(this.sample());
@@ -40,9 +43,12 @@ class BatteryBehavior extends Behavior {
 	}
 }
 
-const BatteryWidget = IconLabel.template($ => ({
-	Behavior: BatteryBehavior,
+const BatteryTemplate = IconLabel.template($ => ({
+	Behavior: $.constructor.Behavior,
 	string: "\uF346", // battery
 }));
 
-export default BatteryWidget;
+export default class BatteryWidget extends Widget {
+	static get Behavior() { return BatteryBehavior; }
+	get Template() { return BatteryTemplate; }
+}

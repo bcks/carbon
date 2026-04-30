@@ -15,6 +15,7 @@
  */
 
 import { IconLabel } from "modules/icons";
+import Widget from "modules/widget";
 
 console.log("Bluetooth widget loaded");
 
@@ -22,18 +23,24 @@ function btIcon() {
 	return watch.connected.app ? "\uF2FF" : "\uF582"; // bluetooth / bluetooth-off
 }
 
-class BluetoothBehavior extends Behavior {
+class BluetoothBehavior extends Widget.Behavior {
 	onCreate(label, data) {
+		super.onCreate(label, data);
+		console.log('BluetoothBehavior onCreate');
 		label.string = btIcon();
 		watch.addEventListener("connected", () => {
+			console.log('Bluetooth connected state changed');
 			label.string = btIcon();
 		});
 	}
 }
 
-const BluetoothWidget = IconLabel.template($ => ({
-	Behavior: BluetoothBehavior,
+const BluetoothTemplate = IconLabel.template($ => ({
+	Behavior: $.constructor.Behavior,
 	string: "\uF2FF", // bluetooth
 }));
 
-export default BluetoothWidget;
+export default class BluetoothWidget extends Widget {
+	static get Behavior() { console.log('BluetoothWidget Behavior getter'); return BluetoothBehavior; }
+	get Template() { console.log('BluetoothWidget Template getter'); return BluetoothTemplate; }
+}

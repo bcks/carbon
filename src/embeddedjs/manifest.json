@@ -16,8 +16,7 @@
 			"modules": {
 				"modules/*": "./emery/modules/*",
 				"*": [
-					"./emery/layout",
-					"./emery/render"
+					"./emery/layout"
 				]
 			}
 		},
@@ -25,8 +24,7 @@
 			"modules": {
 				"modules/*": "./gabbro/modules/*",
 				"*": [
-					"./gabbro/layout",
-					"./gabbro/render"
+					"./gabbro/layout"
 				]
 			}
 		}
