@@ -5,6 +5,8 @@ Run `npm run gen-icon-ref` to regenerate after updating the icon set.
 
 | Name | Codepoint | String literal |
 |---|---|---|
+| `ellipsis` | `U+F0F0` | `\uF0F0` |
+| `radar` | `U+F470` | `\uF470` |
 | `moon-star` | `U+F13B` | `\uF13B` |
 | `heart` | `U+F001` | `\uF001` |
 | `footprints` | `U+F173` | `\uF173` |
