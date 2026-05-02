@@ -10,7 +10,7 @@
  *
  * Usage:
  *   const MyTemplate = Label.template($ => ({
- *     Behavior: $.controller.constructor.Behavior,
+ *     Behavior: MyBehavior,
  *     string:   "\uF000",
  *   }));
  *
@@ -49,19 +49,14 @@ class WidgetBehavior extends Behavior {
 	}
 }
 
-const WidgetTemplate = Content.template($ => ({
-	Behavior: $.controller.constructor.Behavior,
-}));
+const WidgetTemplate = Content.template(() => ({}));
 
 class Widget {
 	static get Behavior() { return WidgetBehavior; }
 
 	constructor(data = {}, coordinates = {}) {
 		this.data = data ?? {};
-		return new this.Template({
-			controller: this,
-			...this.data,
-		}, coordinates);
+		return new this.Template(this.data, coordinates);
 	}
 
 	get Template() { return WidgetTemplate; }

@@ -12,9 +12,7 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import assets from "assets";
-
-const dateStyle = new Style(assets.styles.date);
+import { dateStyle } from "assets";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 

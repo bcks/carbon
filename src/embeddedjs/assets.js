@@ -1,8 +1,12 @@
 /**
  * Shared assets
  *
- * Pure configuration used across the watchface.
- * Skin and Style instances are created at the point of use.
+ * Exports both raw config (default) and pre-built Skin/Style instances
+ * (named exports).  Import the named instances rather than calling
+ * `new Style(...)` or `new Skin(...)` in individual modules — XS modules
+ * are singletons, but each module that runs `new Style(assets.styles.xxx)`
+ * still allocates its own Style object in the chunk pool at startup.
+ * Centralising them here means each is allocated exactly once.
  *
  * @module assets
  *
@@ -53,3 +57,12 @@ const assets = Object.freeze({
 });
 
 export default assets;
+
+// Pre-built Style/Skin instances.
+export const iconStyle      = new Style(assets.styles.icons);
+export const dateStyle      = new Style(assets.styles.date);
+export const timeStyle      = new Style(assets.styles.time);
+export const backgroundSkin = new Skin(assets.skins.background);
+export const topBarSkin     = new Skin(assets.skins.topBar);
+export const graphSkin      = new Skin(assets.skins.graph);
+export const progressSkin   = new Skin(assets.skins.progress);

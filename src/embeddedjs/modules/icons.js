@@ -18,9 +18,7 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import assets from "assets";
-
-const iconStyle = new Style(assets.styles.icons);
+import { iconStyle } from "assets";
 
 /**
  * Label template with the icon font style baked in.

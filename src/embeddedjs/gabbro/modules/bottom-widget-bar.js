@@ -21,13 +21,11 @@
  */
 
 import WidgetBar from "modules/widget-bar";
-import assets from "assets";
-
-const bottomBarStyle = new Style(assets.styles.icons);
+import { iconStyle } from "assets";
 
 const BottomWidgetBarTemplate = Column.template($ => ({
 	Behavior: $.controller.constructor.Behavior,
-	style: bottomBarStyle,
+	style: iconStyle,
 	contents: [
 		Row($, {
 			anchor: "TOP_ROW",

@@ -18,10 +18,7 @@
  */
 
 import Widget from "modules/widget";
-import assets from "assets";
-
-const iconStyle = new Style(assets.styles.icons);
-const dateStyle = new Style(assets.styles.date);
+import { iconStyle, dateStyle } from "assets";
 
 // Template created once at module init — never inside a getter or template body.
 const PlaceholderTemplate = Label.template($ => ({

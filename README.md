@@ -102,17 +102,42 @@ Because codepoints are plain string *values* rather than property *key names*, t
 
 ### XS VM Memory (`src/c/mdbl.c`)
 
-The XS virtual machine heap is configured in `src/c/mdbl.c` via `ModdableCreationRecord`:
+The XS virtual machine heap is configured in `src/c/mdbl.c` via three fixed-size pools. Think of each as a separate memory bucket: you tell the engine exactly how large each bucket is before it starts, and they cannot grow.
 
-| Pool | Size | Purpose |
+| Pool | Current size | What lives here |
 |---|---|---|
-| `slot` | 32 768 bytes (2 048 slots × 16 B) | Object property bindings, module namespaces |
-| `chunk` | 16 384 bytes | Variable-size heap allocations (strings, arrays) |
-| `stack` | 8 192 bytes | Call stack frames |
+| `CARBON_SLOT_SIZE` | 40 960 bytes | Every JS variable binding, object property, and module namespace entry (16 bytes each) |
+| `CARBON_CHUNK_SIZE` | 20 480 bytes | String content, arrays, object literals, module bytecode, `Style`/`Skin` objects |
+| `CARBON_STACK_SIZE` | 6 144 bytes | Call-stack frames |
 
-**Why `slot` is larger than the SDK default (8 192 bytes):** During startup the XS runtime initializes every prelinked module namespace simultaneously before any JavaScript runs. This burst requires roughly 2 048 slots even before `main.js` executes. The default 512-slot budget caused an immediate OOM crash (`Chunk allocation: failed` — misleadingly reported as a chunk error, but caused by slot exhaustion). Setting `slot = 32768` gives comfortable headroom; the emery platform has ~192 KB heap and reports ~57 KB still free after all allocations.
+All three pools are carved out of the Pebble app heap (~131 KB on emery) before any JavaScript runs. Their combined size must stay under roughly 75 KB, or the Pebble OS itself runs out of heap and the app crashes on startup.
+
+**Making pools too large is just as fatal as making them too small.** If slot + chunk + stack > ~75 KB, you'll see startup crashes even with perfectly valid JavaScript.
 
 ### Troubleshooting
+
+#### `fxAbort memory full` on startup
+
+This crash fires before any of your app code runs and is almost always a VM pool sizing problem. The error message alone doesn't tell you which pool is at fault — use the patterns below:
+
+**If the crash happens before `Found mod "pebble.moddable.tech"` appears in the log:**
+The slot pool is probably too large — slot + chunk + stack together exceed the Pebble heap. Reduce `CARBON_SLOT_SIZE`.
+
+**If `Found mod` appears but the crash follows immediately:**
+The chunk pool is too small to hold all the module bytecode and startup allocations (`new Style(...)`, `new Skin(...)`, template closures). Increase `CARBON_CHUNK_SIZE`.
+
+**If the crash only appears after adding new widget modules:**
+Widget modules run their top-level code at startup even before they render. Each `new Style(...)` or `new Skin(...)` at module scope costs chunk space. Always import the pre-built shared instances from `assets.js` rather than creating your own inside a widget file.
+
+**To get exact numbers:** build with `npm run build:dev` (enables `ALLOY_INSTRUMENTATION`) and look for `instruments key: ...` log lines. They report `Slot used`, `Chunk used`, `Stack used`, and `System bytes free` every second. Compare each "used" value against its pool size constant.
+
+#### `fxAbort stack overflow`
+
+The call-stack pool is exhausted. Usually caused by deeply nested Piu template evaluation or accidental recursion. Increase `CARBON_STACK_SIZE`.
+
+#### `fxMapArchive failed`
+
+This crash happens before any JavaScript runs. XS tries to map the compiled `.xsa` archive into memory before initialising module namespaces; if the VM pools are so large that the Pebble heap is already exhausted by the time the map step runs, it fails with no further detail. Treat it identically to `fxAbort memory full` — reduce `CARBON_SLOT_SIZE` first, then check total pool usage.
 
 #### Module specifiers must exactly match manifest keys
 
@@ -144,16 +169,6 @@ There are two ways a module can be declared:
 ```
 
 When in doubt, grep the manifest for the key and make sure your import string matches it literally.
-
-#### `fxMapArchive failed`
-
-At runtime (not compile time) you may see:
-
-```
-fxMapArchive failed
-```
-
-This is a hard crash with no further detail. The cause is [being investigted](https://github.com/Moddable-OpenSource/moddable/discussions/1602#discussioncomment-16782642), but it's likely due to insufficient temporary memory.
 
 #### Build environment: settings.json
 

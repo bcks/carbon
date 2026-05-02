@@ -18,14 +18,9 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import assets from "assets";
+import { iconStyle, dateStyle } from "assets";
 import { observeBattery } from "modules/battery-observer";
 import Widget from "modules/widget";
-
-console.log("Battery widget loaded");
-
-const iconStyle = new Style(assets.styles.icons);
-const dateStyle = new Style(assets.styles.date);
 
 function batteryIcon(sample) {
 	if (sample.charging)     return "\uF38E"; // battery-charging
@@ -60,7 +55,7 @@ class BatteryBehavior extends Behavior {
 }
 
 const BatteryTemplate = Label.template($ => ({
-	Behavior: $.controller.constructor.Behavior,
+	Behavior: BatteryBehavior,
 	top: $.text ? -1 : 0,
 	string: $.text ? "--%" : "\uF346",
 	style: $.text ? dateStyle : iconStyle,

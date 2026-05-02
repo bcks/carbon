@@ -1,23 +1,49 @@
 #include <pebble.h>
 
-// XS virtual machine heap configuration.
-// Defaults are slot=8192, chunk=8192, stack=6144 bytes.
+// XS virtual machine heap pools.
 //
-// The XSA archive load phase initializes all prelinked module namespaces
-// simultaneously before any JS runs.  With ~153 modules (SDK + app) each
-// requiring namespace-binding slots, the burst is large:
+// Think of these as three separate memory buckets the JavaScript engine draws
+// from. You tell it exactly how large each bucket is before it starts. Sizes
+// are in bytes; they come out of the Pebble app heap (~131 KB on emery).
 //
-//   Observed (instruments just before crash, slot=32768):
-//     Slot used:  16384 B  →  GC ran  →  available: 9024 B  →  still failed
-//     GC count:   8192      ←  GC thrashed trying to free space
-//     Modules:    153
+// CARBON_SLOT_SIZE — "the object graph bucket"
+//   Every JS variable binding, object property, and module namespace entry
+//   costs one slot (16 bytes). All module namespaces are wired up before
+//   main.js ever runs, so startup burns a large burst of slots.
+//   Symptom when too small: `fxAbort memory full` immediately on launch,
+//   often before any of your own code runs. Can also appear as
+//   `fxMapArchive failed` if the pool is so small the archive can't even
+//   be loaded.
+//   Symptom when too large: same crash — if this bucket + the others
+//   together exceed the Pebble heap, the OS itself runs out of memory.
 //
+// CARBON_CHUNK_SIZE — "the string/array/bytecode bucket"
+//   Variable-size allocations live here: string content, array storage,
+//   object literals, and the bytecode for every module. Style and Skin
+//   objects (created with `new Style(...)` / `new Skin(...)` at module
+//   load time) also consume chunk space. If many modules each create their
+//   own copy of the same Style, chunk pressure adds up fast.
+//   Symptom when too small: `fxAbort memory full` after the mod loads
+//   ("Found mod" appears in the log) but before or during your app's
+//   module-initialization phase.
 //
-// 4096 slots × 16 B = 65536 B.  emery heap ~192 KB; pools total ~88 KB,
-// leaving ~104 KB free for Pebble OS and Piu rendering.
-#define CARBON_SLOT_SIZE  65536   // 4096 slots × 16 bytes
-#define CARBON_CHUNK_SIZE 16384
-#define CARBON_STACK_SIZE 8192
+// CARBON_STACK_SIZE — "the call-stack bucket"
+//   Each function call frame is allocated here. Deep call chains (e.g.
+//   recursive Piu template evaluation) can exhaust this.
+//   Symptom when too small: `fxAbort stack overflow`.
+//
+// Rule of thumb: slot + chunk + stack should stay under ~55 KB so that
+// Pebble OS + Piu rendering retain enough heap to operate. The emery
+// platform reports ~131 KB app heap; ~75 KB is a safe upper bound for
+// total VM pool usage.
+//
+// To diagnose: enable ALLOY_INSTRUMENTATION (`npm run build:dev`) and look
+// for the "instruments key" log lines. They report "Slot used", "Chunk used",
+// "Stack used", and "System bytes free" every second. If any "used" value
+// is close to its pool size when the crash occurs, that pool is the culprit.
+#define CARBON_SLOT_SIZE  40960
+#define CARBON_CHUNK_SIZE 20480
+#define CARBON_STACK_SIZE 6144
 
 int main(void) {
 	Window *w = window_create();

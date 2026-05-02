@@ -9,9 +9,7 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import assets from "assets";
-
-const timeStyle = new Style(assets.styles.time);
+import { timeStyle } from "assets";
 
 /**
  * Clock label behavior.

@@ -7,10 +7,8 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import assets from "assets";
 import Layout from "layout";
-
-const backgroundSkin = new Skin(assets.skins.background);
+import { backgroundSkin } from "assets";
 
 //
 // Widget configuration (temporarily hardcoded until settings are implemented)
@@ -18,7 +16,7 @@ const backgroundSkin = new Skin(assets.skins.background);
 
 const widgetConfig = {
 	progressBar: {
-		source: "battery",
+		source: "none",
 	},
 
 	// 5 slots per bar.
@@ -26,11 +24,11 @@ const widgetConfig = {
 	// Gabbro top:    row 1 = slots 0-1 (2 wide), row 2 = slots 2-4 (3 wide)
 	// Gabbro bottom: row 1 = slots 0-2 (3 wide), row 2 = slots 3-4 (2 wide)
 	topWidgets: [
-		{ name: "battery", config: { } },
+		{ name: "battery", config: {} },
 		{ name: "battery", config: { text: true } },
+		{ name: "placeholder", config: { string: "\uF582" } },  // bluetooth-off
 		{ name: "placeholder", config: { string: "22", text: true } },
 		{ name: "placeholder", config: { string: "\uF1DC" } },  // sun
-		{ name: "placeholder", config: { string: "\uF0D1" } },  // cloud
 	],
 	bottomWidgets: [
 		{ name: "placeholder", config: { string: "\uF114" } },  // activity

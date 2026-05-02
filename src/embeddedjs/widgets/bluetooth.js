@@ -14,33 +14,46 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import { IconLabel } from "modules/icons";
+import { iconStyle, dateStyle } from "assets";
+import { observeBluetooth } from "modules/bluetooth-observer";
 import Widget from "modules/widget";
 
-console.log("Bluetooth widget loaded");
+function bluetoothString(sample, text, onlyDisconnected) {
+	if (sample.connected && onlyDisconnected)
+		return "";
 
-function btIcon() {
-	return watch.connected.app ? "\uF2FF" : "\uF582"; // bluetooth / bluetooth-off
+	if (text)
+		return sample.connected ? "" : "X";
+
+	return sample.connected ? "\uF2FF" : "\uF582"; // bluetooth / bluetooth-off
 }
 
 class BluetoothBehavior extends Behavior {
 	onCreate(label, data) {
 		this.data = data;
-		console.log('BluetoothBehavior onCreate');
-		label.string = btIcon();
-		watch.addEventListener("connected", () => {
-			console.log('Bluetooth connected state changed');
-			label.string = btIcon();
+		this.unobserve = observeBluetooth((sample) => {
+			label.string = bluetoothString(sample, !!this.data?.text, !!this.data?.onlyDisconnected);
 		});
+	}
+
+	onUndisplaying(label) {
+		if (this.unobserve) {
+			this.unobserve();
+			this.unobserve = null;
+		}
 	}
 }
 
-const BluetoothTemplate = IconLabel.template($ => ({
-	Behavior: $.controller.constructor.Behavior,
+const BluetoothTemplate = Label.template($ => ({
+	Behavior: BluetoothBehavior,
+	top: $.text ? -1 : 0,
 	string: "\uF2FF", // bluetooth
+	style: $.text ? dateStyle : iconStyle,
 }));
 
 export default class BluetoothWidget extends Widget {
-	static get Behavior() { console.log('BluetoothWidget Behavior getter'); return BluetoothBehavior; }
-	get Template() { console.log('BluetoothWidget Template getter'); return BluetoothTemplate; }
+	static get Behavior() { return BluetoothBehavior; }
+	get Template() { return BluetoothTemplate; }
 }
+
+Object.freeze(BluetoothWidget);

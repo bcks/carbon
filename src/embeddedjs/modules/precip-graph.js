@@ -13,9 +13,7 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import assets from "assets";
-
-const graphSkin = new Skin(assets.skins.graph);
+import { graphSkin } from "assets";
 
 const PrecipGraph = Content.template($ => ({
 	height: 28,
