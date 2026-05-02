@@ -92,14 +92,22 @@ class PrecipGraphBehavior extends Behavior {
 			const nowSec = Math.floor(Date.now() / 1000);
 			dayStart = ((sample.sunrise - nowSec) / 3600) * (graphWidth / 24);
 			dayEnd = ((sample.sunset - nowSec) / 3600) * (graphWidth / 24);
-		}
 
-		if (dayEnd > 0 && dayStart < graphWidth) {
-			// Clamp to visible range
-			const lineX = Math.max(0, dayStart);
-			const lineW = Math.min(graphWidth, dayEnd) - lineX;
-			if (lineW > 0) {
-				port.fillColor(assets.colors.graphDaylight, lineX, 0, lineW, 2);
+			const wrap = (value, size) => {
+				let out = value % size;
+				if (out < 0) out += size;
+				return out;
+			};
+
+			const start = wrap(dayStart, graphWidth);
+			const end = wrap(dayEnd, graphWidth);
+
+			if (start < end) {
+				port.fillColor(assets.colors.graphDaylight, start, 0, end - start, 2);
+			} else if (start > end) {
+				// Daylight interval crosses the viewport edge, so draw two spans.
+				port.fillColor(assets.colors.graphDaylight, 0, 0, end, 2);
+				port.fillColor(assets.colors.graphDaylight, start, 0, graphWidth - start, 2);
 			}
 		}
 	}
