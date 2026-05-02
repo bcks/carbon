@@ -91,7 +91,7 @@ const Layout = Container.template($ => ({
 				// Bottom widget bar
 				new BottomWidgetBar($.bottomWidgets, {}),
 				// Progress bar
-				ProgressBar($, {}),
+				ProgressBar($.progressBar ?? {}, {}),
 			],
 		}),
 	],

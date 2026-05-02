@@ -4,6 +4,7 @@
  * A full-screen Port overlay drawn BEHIND other content (place first in
  * Application contents). Uses a standalone Poco renderer to draw two
  * concentric arcs — track (full bottom semicircle) then fill on top.
+ * Filled proportion is driven by the configured source in `main.js`.
  *
  * Drawing model
  * ─────────────
@@ -30,6 +31,7 @@
 
 import Poco from "commodetto/Poco";
 import assets from "assets";
+import { observeBattery } from "modules/battery-observer";
 
 const BAR_THICKNESS = 4;
 
@@ -41,8 +43,8 @@ function parseHex(hex) {
 
 class ArcProgressBehavior extends Behavior {
 	onCreate(content, data) {
-		// TODO: drive from steps sensor or battery sensor
-		this.progress = 0.4; // stub: 40%
+		this.data = data;
+		this.progress = 0;
 
 		// Pre-encode colors using a Poco instance created once at startup.
 		// makeColor() is a pure encoding call — no rendering occurs here.
@@ -51,12 +53,25 @@ class ArcProgressBehavior extends Behavior {
 		this.fillColor  = poco.makeColor(...parseHex(assets.colors.progressFill));
 		this.bgColor    = poco.makeColor(...parseHex(assets.colors.background));
 		this.render     = poco;
+
+		if (this.data?.source === "battery") {
+			this.unobserve = observeBattery((sample) => {
+				this.setProgress(content, sample.percent / 100);
+			});
+		}
 	}
 
 	/** Call with a value 0–1 to update the bar without a full redraw. */
 	setProgress(content, value) {
 		this.progress = Math.max(0, Math.min(1, value));
 		content.invalidate();
+	}
+
+	onUndisplaying(content) {
+		if (this.unobserve) {
+			this.unobserve();
+			this.unobserve = null;
+		}
 	}
 
 	onDraw(port, dirtyX, dirtyY, dirtyW, dirtyH) {

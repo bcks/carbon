@@ -17,16 +17,20 @@ const backgroundSkin = new Skin(assets.skins.background);
 //
 
 const widgetConfig = {
+	progressBar: {
+		source: "battery",
+	},
+
 	// 5 slots per bar.
 	// Emery:         single row, left-to-right, slots 0-4
 	// Gabbro top:    row 1 = slots 0-1 (2 wide), row 2 = slots 2-4 (3 wide)
 	// Gabbro bottom: row 1 = slots 0-2 (3 wide), row 2 = slots 3-4 (2 wide)
 	topWidgets: [
-		{ name: "placeholder", config: { string: "\uF2FF" } }, // bluetooth
+		{ name: "battery", config: { } },
+		{ name: "battery", config: { text: true } },
 		{ name: "placeholder", config: { string: "22", text: true } },
 		{ name: "placeholder", config: { string: "\uF1DC" } },  // sun
 		{ name: "placeholder", config: { string: "\uF0D1" } },  // cloud
-		{ name: "placeholder", config: { string: "\uF346" } },  // battery
 	],
 	bottomWidgets: [
 		{ name: "placeholder", config: { string: "\uF114" } },  // activity

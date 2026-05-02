@@ -1,10 +1,14 @@
 /**
  * Battery widget
  *
- * Displays a battery icon reflecting the current charge level and charging
- * state.  Listens for `watch.battery` updates via `onBatteryChanged`.
+ * Displays battery state as either an icon or a short text string such as
+ * `75%`, depending on widget configuration.
  *
- * @todo Implement battery percentage text option (requires font with % glyph, or custom text layout).
+ * Config:
+ *   text    - if true, show percentage text; default is icon mode
+ *
+ * Battery data comes from the shared battery observer module so multiple
+ * battery-driven features can share a single sensor instance.
  *
  * @module widgets/battery
  *
@@ -14,12 +18,14 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import Battery from "embedded:sensor/Battery";
-
-import { IconLabel } from "modules/icons";
+import assets from "assets";
+import { observeBattery } from "modules/battery-observer";
 import Widget from "modules/widget";
 
 console.log("Battery widget loaded");
+
+const iconStyle = new Style(assets.styles.icons);
+const dateStyle = new Style(assets.styles.date);
 
 function batteryIcon(sample) {
 	if (sample.charging)     return "\uF38E"; // battery-charging
@@ -29,26 +35,40 @@ function batteryIcon(sample) {
 	return "\uF431"; // battery-warning
 }
 
+function batteryText(sample) {
+	return `${ Math.round(sample.percent) }%`;
+}
+
+function batteryString(sample, text) {
+	return text ? batteryText(sample) : batteryIcon(sample);
+}
+
 class BatteryBehavior extends Behavior {
 	onCreate(label, data) {
 		this.data = data;
-		this.sensor = new Battery({
-			onSample() {
-				label.string = batteryIcon(this.sample());
-			},
+		this.unobserve = observeBattery((sample) => {
+			label.string = batteryString(sample, !!this.data?.text);
 		});
-		const initial = this.sensor.sample();
-		console.log("battery sample:", initial.percent, initial.charging);
-		label.string = batteryIcon(initial);
+	}
+
+	onUndisplaying(label) {
+		if (this.unobserve) {
+			this.unobserve();
+			this.unobserve = null;
+		}
 	}
 }
 
-const BatteryTemplate = IconLabel.template($ => ({
+const BatteryTemplate = Label.template($ => ({
 	Behavior: $.controller.constructor.Behavior,
-	string: "\uF346", // battery
+	top: $.text ? -1 : 0,
+	string: $.text ? "--%" : "\uF346",
+	style: $.text ? dateStyle : iconStyle,
 }));
 
 export default class BatteryWidget extends Widget {
 	static get Behavior() { return BatteryBehavior; }
 	get Template() { return BatteryTemplate; }
 }
+
+Object.freeze(BatteryWidget);

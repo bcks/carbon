@@ -23,7 +23,7 @@ import ProgressBar from "modules/progress-bar";
 const Layout = Container.template($ => ({
 	contents: [
 		// Arc progress bar: full-screen Port overlay, drawn behind everything.
-		ProgressBar($, {}),
+		ProgressBar($.progressBar ?? {}, {}),
 		Column($, {
 			top: 0, bottom: 0, left: 0, right: 0,
 			contents: [

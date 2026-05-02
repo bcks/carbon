@@ -2,9 +2,11 @@
  * Progress bar stub
  *
  * A thin bar spanning the full width at the very bottom edge of the screen.
- * Filled proportion is driven by steps-toward-goal or battery percentage.
+ * Filled proportion is driven by the configured source in `main.js`.
  *
- * Stub implementation shows a static 40 % fill.
+ * Supported config:
+ *   source: "battery"  - fill from battery percentage
+ *   any other value     - show an empty bar
  *
  * @module modules/progress-bar
  *
@@ -15,17 +17,31 @@
  */
 
 import assets from "assets";
+import { observeBattery } from "modules/battery-observer";
 
 class ProgressBarBehavior extends Behavior {
 	onCreate(port, data) {
-		// TODO: drive from steps sensor or battery sensor
-		this.progress = 0.4; // stub: 40 %
+		this.data = data;
+		this.progress = 0;
+
+		if (this.data?.source === "battery") {
+			this.unobserve = observeBattery((sample) => {
+				this.setProgress(port, sample.percent / 100);
+			});
+		}
 	}
 
 	/** Call with a value 0–1 to update the bar without a full redraw. */
 	setProgress(port, value) {
 		this.progress = Math.max(0, Math.min(1, value));
 		port.invalidate();
+	}
+
+	onUndisplaying(port) {
+		if (this.unobserve) {
+			this.unobserve();
+			this.unobserve = null;
+		}
 	}
 
 	onDraw(port, x, y, w, h) {
