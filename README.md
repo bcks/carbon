@@ -145,7 +145,7 @@ There are two ways a module can be declared:
 
 When in doubt, grep the manifest for the key and make sure your import string matches it literally.
 
-#### `fxMapArchive failed` — XSA symbol table overflow
+#### `fxMapArchive failed`
 
 At runtime (not compile time) you may see:
 
@@ -153,39 +153,7 @@ At runtime (not compile time) you may see:
 fxMapArchive failed
 ```
 
-This is a hard crash with no further detail. The cause is that the compiled XSA archive contains more than **256 unique symbols** (identifier names). The Pebble host calls `fxMapArchive` with a fixed `bufferSize=256`, so any build that exceeds this limit will fail at startup.
-
-The XS compiler (`xsc`) records every identifier as a symbol — not just exported names, but also local variable names, method call names, and destructured property keys — even in release builds.
-
-**Diagnosis:** Parse the SYMB atom of the built XSA archive to count symbols:
-
-```sh
-python3 - <<'EOF'
-import struct
-data = open("build/gabbro/src/resource_ids.auto.c", "rb").read()  # adjust path
-# The XSA is the .xsa file in build/mods/gabbro/
-EOF
-```
-
-Or more directly, count unique identifiers in the XSA:
-
-```sh
-python3 -c "
-data = open('build/mods/gabbro/mc.xsa', 'rb').read()
-count = int.from_bytes(data[81:83], 'little')
-print(f'{count} symbols')
-"
-```
-
-**Common causes and fixes:**
-
-| Cause | Slots consumed | Fix |
-|---|---|---|
-| Named `export const` icon library | 62 (one per name) | Use Unicode codepoint string literals instead — see `ICONS.md` |
-| `import { Container } from "piu/All"` | ~10+ new names | Use the Piu globals (`Column`, `Row`, etc.) injected by the host instead |
-| Extra local variable names | 1 per unique name | Reuse existing names or inline expressions |
-
-The codepoint string approach (used in this project) is the highest-leverage fix: codepoints are plain string *values*, not property *key names*, so they contribute zero symbols to the table.
+This is a hard crash with no further detail. The cause is [being investigted](https://github.com/Moddable-OpenSource/moddable/discussions/1602#discussioncomment-16782642), but it's likely due to insufficient temporary memory.
 
 #### Build environment: settings.json
 
