@@ -30,7 +30,7 @@
  */
 
 import Poco from "commodetto/Poco";
-import assets from "assets";
+import { colors } from "assets";
 import { observeBattery } from "modules/battery-observer";
 
 const BAR_THICKNESS = 4;
@@ -49,9 +49,9 @@ class ArcProgressBehavior extends Behavior {
 		// Pre-encode colors using a Poco instance created once at startup.
 		// makeColor() is a pure encoding call — no rendering occurs here.
 		const poco = new Poco(screen);
-		this.trackColor = poco.makeColor(...parseHex(assets.colors.progressTrack));
-		this.fillColor  = poco.makeColor(...parseHex(assets.colors.progressFill));
-		this.bgColor    = poco.makeColor(...parseHex(assets.colors.background));
+		this.trackColor = poco.makeColor(...parseHex(colors.progressTrack));
+		this.fillColor  = poco.makeColor(...parseHex(colors.progressFill));
+		this.bgColor    = poco.makeColor(...parseHex(colors.background));
 		this.render     = poco;
 
 		if (this.data?.source === "battery") {

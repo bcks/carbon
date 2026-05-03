@@ -1,9 +1,13 @@
 /**
- * Weather widget — weather conditions icon display
+ * Weather widget — icon, text, or icon+text display
  *
- * Displays only a weather icon based on the current conditions.
+ * Config:
+ *   mode      - "current" (default), "low", or "high"
+ *   showIcon  - true by default
+ *   showText  - false by default
+ *
+ * If both showIcon and showText are true, icon and text are rendered together.
  * Subscribes to WeatherObserver and updates on weather change.
- * Shows an ellipsis placeholder while data is unavailable.
  *
  * @module widgets/weather
  *
@@ -14,21 +18,51 @@
  */
 
 import { observeWeather, getWeatherIcon } from "modules/weather-observer";
-import { topBarIconsStyle } from "assets";
+import { styles } from "assets";
 import Widget from "modules/widget";
 
-//
-// Behavior — subscribe/unsubscribe to weather updates
-//
+function weatherText(sample, mode) {
+	if (!sample)
+		return "--";
+
+	if (mode === "low")
+		return `${sample.temperatureLow}°`;
+
+	if (mode === "high")
+		return `${sample.temperatureHigh}°`;
+
+	return `${sample.temperature}°`;
+}
+
+function weatherIcon(sample, mode) {
+	if (!sample)
+		return "\uF0F0"; // ellipsis
+
+	if (mode === "low")
+		return "\uF0BB"; // arrow-big-up-dash
+
+	if (mode === "high")
+		return "\uF576"; // arrow-big-down-dash
+
+	return getWeatherIcon(sample.weatherCode);
+}
 
 class WeatherBehavior extends Behavior {
-	onCreate(label) {
+	onCreate(container, data) {
+		this.data = data || {};
+		const iconLabel = container.first;
+		const textLabel = iconLabel.next;
+		const showIcon = this.data.showIcon !== false;
+		const showText = !!this.data.showText;
+		const mode = this.data.mode || "current";
+
 		this.unsubscribe = observeWeather((sample) => {
-			label.string = sample ? getWeatherIcon(sample.weatherCode) : "\uF0F0";
+			iconLabel.string = showIcon ? weatherIcon(sample, mode) : "";
+			textLabel.string = showText ? weatherText(sample, mode) : "";
 		});
 	}
 
-	onUndisplaying(label) {
+	onUndisplaying(container) {
 		if (this.unsubscribe) {
 			this.unsubscribe();
 			this.unsubscribe = null;
@@ -36,23 +70,47 @@ class WeatherBehavior extends Behavior {
 	}
 }
 
-//
-// Template
-//
+const WeatherTemplate = Row.template($ => {
+	const showIcon = $.showIcon !== false;
+	const showText = !!$.showText;
+	const slotW = $.slotWidth ?? 48;
+	const pad = $.slotPadding ?? 3;
+	const iconW = showIcon ? 20 : 0;
+	const gap = (showIcon && showText) ? 2 : 0;
+	const textW = showText ? Math.max(18, slotW - iconW - gap - (pad * 2)) : 0;
+	const contentW = iconW + gap + textW;
 
-const WeatherTemplate = Label.template($ => ({
-	style: $.iconStyle ?? topBarIconsStyle,
-	string: "",
-	Behavior: WeatherBehavior,
-}));
+	let left = pad;
+	if ($.slotAlign === "center")
+		left = Math.max(0, Math.floor((slotW - contentW) / 2));
+	else if ($.slotAlign === "right")
+		left = Math.max(0, slotW - pad - contentW);
 
-//
-// Widget — constructor returns configured template
-//
+	return {
+		Behavior: WeatherBehavior,
+		left, width: contentW,
+		contents: [
+			Label($, {
+				width: iconW,
+				style: $.iconStyle ?? styles.topBarIcons,
+				string: showIcon ? "\uF0F0" : "",
+			}),
+			Label($, {
+				width: textW,
+				style: $.textStyle ?? styles.topBarText,
+				string: showText ? "--" : "",
+			}),
+		],
+	};
+});
 
 class WeatherWidget extends Widget {
 	constructor(data, coordinates) {
-		return new WeatherTemplate(data, coordinates);
+		const config = {
+			...(data || {}),
+			slotWidth: coordinates?.width ?? data?.slotWidth,
+		};
+		return new WeatherTemplate(config, coordinates);
 	}
 }
 

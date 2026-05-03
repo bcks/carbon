@@ -12,17 +12,25 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import { topBarSkin, topBarIconsStyle, topBarTextStyle } from "assets";
+import {
+	skins,
+	styles,
+} from "assets";
 import WidgetBar, { WidgetBarTemplate } from "modules/widget-bar";
 
 const TopWidgetBarTemplate = WidgetBarTemplate.template($ => ({
-	skin: topBarSkin,
-	style: topBarIconsStyle,
+	skin: skins.topBar,
+	style: styles.topBarIcons,
 }));
 
 class TopWidgetBar extends WidgetBar {
-	get iconStyle() { return topBarIconsStyle; }
-	get textStyle() { return topBarTextStyle; }
+	getIconStyle(slotAlign = "center") {
+		return styles.topBarIcons;
+	}
+
+	getTextStyle(slotAlign = "center") {
+		return styles.topBarText;
+	}
 	get Template() { return TopWidgetBarTemplate; }
 }
 

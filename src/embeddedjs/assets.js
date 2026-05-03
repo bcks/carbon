@@ -43,38 +43,36 @@ const colors = Object.freeze({
 	progressFill:    palette.WHITE,
 });
 
-const assets = Object.freeze({
-	fonts,
-	palette,
-	colors,
-	skins: {
-		background: { fill: colors.background },
-		topBar:     { fill: colors.topBar },
-		graph:      { fill: colors.graphBackground },
-		progress:   { fill: colors.progressTrack },
-	},
-	styles: {
-		time:           { color: palette.WHITE, font: fonts.time },
-		date:           { color: palette.LIGHT_GREY, font: fonts.date },
-		topBarIcons:    { color: palette.BLACK, font: fonts.icons },
-		topBarText:     { color: palette.BLACK, font: fonts.date },
-		bottomBarIcons: { color: palette.WHITE, font: fonts.icons },
-		bottomBarText:  { color: palette.WHITE, font: fonts.date },
-	},
+const skinConfigs = Object.freeze({
+	background: { fill: colors.background },
+	topBar:     { fill: colors.topBar },
+	graph:      { fill: colors.graphBackground },
+	progress:   { fill: colors.progressTrack },
 });
 
-export default assets;
+const styleConfigs = Object.freeze({
+	time:           { color: palette.WHITE, font: fonts.time },
+	date:           { color: palette.LIGHT_GREY, font: fonts.date },
+	topBarIcons:    { color: palette.BLACK, font: fonts.icons, horizontal: "center" },
+	topBarText:     { color: palette.BLACK, font: fonts.date, horizontal: "center" },
+	bottomBarIcons: { color: palette.WHITE, font: fonts.icons, horizontal: "center" },
+	bottomBarText:  { color: palette.WHITE, font: fonts.date, horizontal: "center" },
+});
 
-// Pre-built Skin instances.
-export const backgroundSkin = new Skin(assets.skins.background);
-export const topBarSkin     = new Skin(assets.skins.topBar);
-export const graphSkin      = new Skin(assets.skins.graph);
-export const progressSkin   = new Skin(assets.skins.progress);
+const skins = Object.freeze({
+	background: new Skin(skinConfigs.background),
+	topBar:     new Skin(skinConfigs.topBar),
+	graph:      new Skin(skinConfigs.graph),
+	progress:   new Skin(skinConfigs.progress),
+});
 
-// Pre-built Style instances.
-export const dateStyle           = new Style(assets.styles.date);
-export const timeStyle           = new Style(assets.styles.time);
-export const topBarIconsStyle    = new Style(assets.styles.topBarIcons);
-export const topBarTextStyle     = new Style(assets.styles.topBarText);
-export const bottomBarIconsStyle = new Style(assets.styles.bottomBarIcons);
-export const bottomBarTextStyle  = new Style(assets.styles.bottomBarText);
+const styles = Object.freeze({
+	time:           new Style(styleConfigs.time),
+	date:           new Style(styleConfigs.date),
+	topBarIcons:    new Style(styleConfigs.topBarIcons),
+	topBarText:     new Style(styleConfigs.topBarText),
+	bottomBarIcons: new Style(styleConfigs.bottomBarIcons),
+	bottomBarText:  new Style(styleConfigs.bottomBarText),
+});
+
+export { fonts, palette, colors, skins, styles };

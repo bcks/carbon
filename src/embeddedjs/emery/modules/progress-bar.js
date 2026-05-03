@@ -16,7 +16,7 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import assets from "assets";
+import { colors } from "assets";
 import { observeBattery } from "modules/battery-observer";
 
 class ProgressBarBehavior extends Behavior {
@@ -46,11 +46,11 @@ class ProgressBarBehavior extends Behavior {
 
 	onDraw(port, x, y, w, h) {
 		// Track
-		port.fillColor(assets.colors.progressTrack, 0, 0, w, h);
+		port.fillColor(colors.progressTrack, 0, 0, w, h);
 		// Fill
 		const fillW = Math.round(w * this.progress);
 		if (fillW > 0) {
-			port.fillColor(assets.colors.progressFill, 0, 0, fillW, h);
+			port.fillColor(colors.progressFill, 0, 0, fillW, h);
 		}
 	}
 }

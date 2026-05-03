@@ -8,7 +8,7 @@
  */
 
 import Layout from "layout";
-import { backgroundSkin } from "assets";
+import { skins } from "assets";
 
 //
 // Widget configuration (temporarily hardcoded until settings are implemented)
@@ -19,21 +19,18 @@ const widgetConfig = {
 		source: "battery",
 	},
 
-	// 5 slots per bar.
-	// Emery:         single row, left-to-right, slots 0-4
-	// Gabbro top:    row 1 = slots 0-1 (2 wide), row 2 = slots 2-4 (3 wide)
-	// Gabbro bottom: row 1 = slots 0-2 (3 wide), row 2 = slots 3-4 (2 wide)
+	// 3 slots per bar.
+	// Emery: left, center, right.
+	// Gabbro top: #1 bottom-left, #2 top-center, #3 bottom-right.
+	// Gabbro bottom: #1 top-left, #2 bottom-center, #3 top-right.
 	topWidgets: [
-		{ name: "temperature", config: { mode: "low" } },
-		null,
-		{ name: "temperature", config: { mode: "current" } },
-		null,
-		{ name: "temperature", config: { mode: "high" } },
+		{ name: "weather", config: { mode: "low", showIcon: true, showText: true } },
+		{ name: "weather", config: { mode: "current", showIcon: true, showText: true } },
+		{ name: "weather", config: { mode: "high", showIcon: true, showText: true } },
 	],
 	bottomWidgets: [
-		{ name: "battery", config: { onlyWarningCharging: true} },
-		null,
-		{ name: "weather", config: {} },
+		{ name: "battery", config: { onlyWarningCharging: true } },
+		// { name: "placeholder", config: { icon: "\uF110", text: "Hi" } },
 		null,
 		{ name: "bluetooth", config: { onlyDisconnected: true } },
 	],
@@ -56,7 +53,7 @@ class CarbonBehavior extends Behavior {
 }
 
 const CarbonApplication = Application.template($ => ({
-	skin: backgroundSkin,
+	skin: skins.background,
 	Behavior: CarbonBehavior,
 	contents: [
 		Layout($, {

@@ -21,44 +21,48 @@
  */
 
 import WidgetBar from "modules/widget-bar";
-import { bottomBarIconsStyle, bottomBarTextStyle } from "assets";
+import {
+	styles,
+} from "assets";
 
 const BottomWidgetBarTemplate = Column.template($ => ({
 	Behavior: $.controller.constructor.Behavior,
-	style: bottomBarIconsStyle,
+	style: styles.bottomBarIcons,
 	contents: [
 		Row($, {
 			anchor: "TOP_ROW",
 			height: Math.floor($.height / 2),
-			// inset for 3-slot row
-			left: Math.floor((screen.width - (screen.width / 4) * 3) / 2),
-			right: Math.floor((screen.width - (screen.width / 4) * 3) / 2),
+			left: Math.floor(screen.width / 6),
+			right: Math.floor(screen.width / 6),
 		}),
 		Row($, {
 			anchor: "BOTTOM_ROW",
 			height: Math.floor($.height / 2),
-			// inset for 2-slot row
-			left: Math.floor((screen.width - (screen.width / 4) * 2) / 2),
-			right: Math.floor((screen.width - (screen.width / 4) * 2) / 2),
+			left: Math.floor(screen.width / 3),
+			right: Math.floor(screen.width / 3),
 		}),
 	]
 }));
 
 class BottomWidgetBar extends WidgetBar {
-	get iconStyle() { return bottomBarIconsStyle; }
-	get textStyle() { return bottomBarTextStyle; }
+	getIconStyle(slotAlign = "center") {
+		return styles.bottomBarIcons;
+	}
+
+	getTextStyle(slotAlign = "center") {
+		return styles.bottomBarText;
+	}
 	get Template() { return BottomWidgetBarTemplate; }
 
 	renderSlots( container, slots ) {
-		const slotW = Math.floor(screen.width / 4);
-		const slotH = container.height / 2;
-		// slots.forEach(spec => this.makeSlot(spec, container, slotW, slotH));
-		// Row 1: slots 0-2
-		const topRow = container.TOP_ROW;
-		(slots ?? []).slice(0, 3).forEach(spec => this.makeSlot(spec, topRow, slotW, slotH));
-		// Row 2: slots 3-4
-		const bottomRow = container.BOTTOM_ROW;
-		(slots ?? []).slice(3, 5).forEach(spec => this.makeSlot(spec, bottomRow, slotW, slotH));
+		const slotW = Math.floor(screen.width / 3);
+		const slotH = Math.floor(container.height / 2);
+		const list = slots ?? [];
+
+		// Mirrored arrangement: left/right on top, center below.
+		this.makeSlot(list[0], container.TOP_ROW, slotW, slotH, "left", 0);
+		this.makeSlot(list[2], container.TOP_ROW, slotW, slotH, "right", 2);
+		this.makeSlot(list[1], container.BOTTOM_ROW, slotW, slotH, "center", 1);
 	}
 }
 

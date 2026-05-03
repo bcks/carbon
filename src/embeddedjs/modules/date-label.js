@@ -12,7 +12,7 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import { dateStyle } from "assets";
+import { styles } from "assets";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -29,7 +29,7 @@ class DateBehavior extends Behavior {
 const DateLabel = Label.template($ => ({
 	anchor: "DATE",
 	Behavior: DateBehavior,
-	style: dateStyle,
+	style: styles.date,
 	string: 'Day, 0/0',
 }));
 

@@ -9,7 +9,7 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import { timeStyle } from "assets";
+import { styles } from "assets";
 
 /**
  * Clock label behavior.
@@ -38,7 +38,7 @@ class ClockBehavior extends Behavior {
 const ClockLabel = Label.template($ => ({
 	anchor: "CLOCK",
 	Behavior: ClockBehavior,
-	style: timeStyle,
+	style: styles.time,
 	string: "00:00",
 }));
 

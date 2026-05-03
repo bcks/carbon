@@ -1,31 +1,56 @@
 /**
  * Placeholder widget
  *
- * Debug stand-in for empty widget slots.  Renders either an icon codepoint
- * (default) or a short text string using the date style, depending on config.
+ * Debug stand-in for widget slots. Supports icon-only, text-only,
+ * or icon+text output so layout and style combinations can be tested.
  *
  * Config:
- *   string  — string to display (icon codepoint or short text)
- *   text    — if true, use the date style (for numbers/text); default is icon style
+ *   icon - icon glyph/codepoint string
+ *   text - text payload
  *
  * @module widgets/placeholder
  * @todo Remove before release.
- *
- * @author    Cory Hughart <cory@coryhughart.com>
- * @copyright 2026 Cory Hughart
- * @license   https://www.gnu.org/licenses/gpl-3.0.html GPL-3.0-or-later
- * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
 import Widget from "modules/widget";
-import { topBarIconsStyle, topBarTextStyle } from "assets";
+import { styles } from "assets";
 
-// Template created once at module init — never inside a getter or template body.
-const PlaceholderTemplate = Label.template($ => ({
-	top:    $.text ? -1 : 0, // nudge up to better align with icons
-	string: $.string ?? "\uF350", // thermometer by default
-	style:  $.text ? ($.textStyle ?? topBarTextStyle) : ($.iconStyle ?? topBarIconsStyle),
-}));
+const PlaceholderTemplate = Row.template($ => {
+	const hasIcon = typeof $.icon === "string" && $.icon.length > 0;
+	const hasText = typeof $.text === "string" && $.text.length > 0;
+	const iconString = hasIcon ? $.icon : "";
+	const textString = hasText ? $.text : "";
+
+	const slotW = $.slotWidth ?? 48;
+	const pad = $.slotPadding ?? 3;
+	const iconW = hasIcon ? 20 : 0;
+	const gap = hasIcon && hasText ? 2 : 0;
+	const textW = hasText ? Math.max(14, slotW - iconW - gap - (pad * 2)) : 0;
+	const contentW = iconW + gap + textW;
+
+	let left = pad;
+	if ($.slotAlign === "center")
+		left = Math.max(0, Math.floor((slotW - contentW) / 2));
+	else if ($.slotAlign === "right")
+		left = Math.max(0, slotW - pad - contentW);
+
+	return {
+		left,
+		width: contentW,
+		contents: [
+			Label($, {
+				width: iconW,
+				style: $.iconStyle ?? styles.topBarIcons,
+				string: iconString,
+			}),
+			Label($, {
+				width: textW,
+				style: $.textStyle ?? styles.topBarText,
+				string: textString,
+			}),
+		],
+	};
+});
 
 class PlaceholderWidget extends Widget {
 	get Template() { return PlaceholderTemplate; }

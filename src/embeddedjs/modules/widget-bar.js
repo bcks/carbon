@@ -40,7 +40,9 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import { topBarIconsStyle, topBarTextStyle } from "assets";
+import {
+	styles,
+} from "assets";
 
 class WidgetBarBehavior extends Behavior {
 	onCreate(container, data) {
@@ -65,8 +67,13 @@ class WidgetBar {
 
 	static get Behavior() { return WidgetBarBehavior; }
 
-	get iconStyle() { return topBarIconsStyle; }
-	get textStyle() { return topBarTextStyle; }
+	getIconStyle(slotAlign = "center") {
+		return styles.topBarIcons;
+	}
+
+	getTextStyle(slotAlign = "center") {
+		return styles.topBarText;
+	}
 
 	/**
 	 * Creates a concrete Piu bar container and returns it.
@@ -94,9 +101,12 @@ class WidgetBar {
 	get Template() { return WidgetBarTemplate; }
 
 	renderSlots( container, slots ) {
-		const slotW = Math.floor(container.width / 5); // Assuming 5 slots max
+		const slotW = Math.floor(container.width / 3);
 		const slotH = container.height;
-		slots.forEach(spec => this.makeSlot(spec, container, slotW, slotH));
+		(slots ?? []).slice(0, 3).forEach((spec, i) => {
+			const slotAlign = i === 0 ? "left" : (i === 2 ? "right" : "center");
+			this.makeSlot(spec, container, slotW, slotH, slotAlign, i);
+		});
 	}
 
 	/**
@@ -106,15 +116,21 @@ class WidgetBar {
 	 * @param   {Content}     container The parent container to add the slot to.
 	 * @param   {number}      slotW   Slot width in pixels.
 	 * @param   {number}      slotH   Slot height in pixels.
+	 * @param   {string}      slotAlign Alignment hint: left, center, or right.
+	 * @param   {number}      slotIndex Slot index in the bar.
 	 * @returns {Content}     Piu content for the slot.
 	 */
-	makeSlot(spec, container, slotW, slotH) {
+	makeSlot(spec, container, slotW, slotH, slotAlign = "center", slotIndex = 0) {
 		if (spec) {
 			const Widget = importNow("widgets/" + spec.name).default;
 			const config = {
 				...(spec?.config ?? {}),
-				iconStyle: spec?.config?.iconStyle ?? this.iconStyle,
-				textStyle: spec?.config?.textStyle ?? this.textStyle,
+				iconStyle: spec?.config?.iconStyle ?? this.getIconStyle(slotAlign),
+				textStyle: spec?.config?.textStyle ?? this.getTextStyle(slotAlign),
+				slotAlign,
+				slotPadding: spec?.config?.slotPadding ?? 3,
+				slotWidth: slotW,
+				slotIndex,
 			};
 			container.add(new Widget(config, { width: slotW, height: slotH }));
 			return;

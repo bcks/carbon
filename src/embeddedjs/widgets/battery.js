@@ -19,7 +19,7 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import { topBarIconsStyle, topBarTextStyle } from "assets";
+import { styles } from "assets";
 import { observeBattery } from "modules/battery-observer";
 import Widget from "modules/widget";
 
@@ -69,7 +69,7 @@ const BatteryTemplate = Label.template($ => ({
 	Behavior: BatteryBehavior,
 	top: $.text ? -1 : 0,
 	string: $.onlyWarningCharging ? "" : ($.text ? "--%" : "\uF346"),
-	style: $.text ? ($.textStyle ?? topBarTextStyle) : ($.iconStyle ?? topBarIconsStyle),
+	style: $.text ? ($.textStyle ?? styles.topBarText) : ($.iconStyle ?? styles.topBarIcons),
 }));
 
 export default class BatteryWidget extends Widget {

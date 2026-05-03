@@ -14,7 +14,7 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import { topBarIconsStyle, topBarTextStyle } from "assets";
+import { styles } from "assets";
 import { observeBluetooth } from "modules/bluetooth-observer";
 import Widget from "modules/widget";
 
@@ -48,7 +48,7 @@ const BluetoothTemplate = Label.template($ => ({
 	Behavior: BluetoothBehavior,
 	top: $.text ? -1 : 0,
 	string: '',
-	style: $.text ? ($.textStyle ?? topBarTextStyle) : ($.iconStyle ?? topBarIconsStyle),
+	style: $.text ? ($.textStyle ?? styles.topBarText) : ($.iconStyle ?? styles.topBarIcons),
 }));
 
 export default class BluetoothWidget extends Widget {

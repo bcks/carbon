@@ -18,7 +18,7 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import { iconStyle } from "assets";
+import { styles } from "assets";
 
 /**
  * Label template with the icon font style baked in.
@@ -26,5 +26,5 @@ import { iconStyle } from "assets";
  * Usage: IconLabel($, { string: "\uF346" })  // see ICONS.md for codepoints
  */
 export const IconLabel = Label.template($ => ({
-	style: iconStyle,
+	style: styles.topBarIcons,
 }));
