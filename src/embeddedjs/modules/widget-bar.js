@@ -40,6 +40,8 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
+import { topBarIconsStyle, topBarTextStyle } from "assets";
+
 class WidgetBarBehavior extends Behavior {
 	onCreate(container, data) {
 		this.controller = data?.controller;
@@ -62,6 +64,9 @@ export const WidgetBarTemplate = Row.template($ => ({
 class WidgetBar {
 
 	static get Behavior() { return WidgetBarBehavior; }
+
+	get iconStyle() { return topBarIconsStyle; }
+	get textStyle() { return topBarTextStyle; }
 
 	/**
 	 * Creates a concrete Piu bar container and returns it.
@@ -106,7 +111,12 @@ class WidgetBar {
 	makeSlot(spec, container, slotW, slotH) {
 		if (spec) {
 			const Widget = importNow("widgets/" + spec.name).default;
-			container.add(new Widget(spec?.config, { width: slotW, height: slotH }));
+			const config = {
+				...(spec?.config ?? {}),
+				iconStyle: spec?.config?.iconStyle ?? this.iconStyle,
+				textStyle: spec?.config?.textStyle ?? this.textStyle,
+			};
+			container.add(new Widget(config, { width: slotW, height: slotH }));
 			return;
 		}
 

@@ -85,7 +85,9 @@ class PrecipGraphBehavior extends Behavior {
 			port.fillColor(assets.colors.graphBar, barLeft, graphTop, barWidth, barHeight);
 		}
 
-		// Draw daylight line from API sunrise/sunset, relative to now at x=0.
+		// Draw daylight bar from API sunrise/sunset, relative to now at x=0.
+		// A full-width dark base is drawn first; the daylight span is lit in white.
+		port.fillColor(assets.colors.graphDaylightBg, 0, 0, graphWidth, 2);
 		let dayStart = 0;
 		let dayEnd = 0;
 		if (sample.sunrise && sample.sunset) {

@@ -17,7 +17,7 @@
  */
 
 import { observeWeather } from "modules/weather-observer";
-import { dateStyle } from "assets";
+import { topBarTextStyle } from "assets";
 import Widget from "modules/widget";
 
 function temperatureString(sample, mode) {
@@ -58,7 +58,7 @@ class TemperatureBehavior extends Behavior {
 //
 
 const TemperatureTemplate = Label.template($ => ({
-	style: dateStyle,
+	style: $.textStyle ?? topBarTextStyle,
 	string: "",
 	Behavior: TemperatureBehavior,
 }));

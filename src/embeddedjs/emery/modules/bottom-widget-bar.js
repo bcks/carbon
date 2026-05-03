@@ -12,14 +12,16 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import { iconStyle } from "assets";
+import { bottomBarIconsStyle, bottomBarTextStyle } from "assets";
 import WidgetBar, { WidgetBarTemplate } from "modules/widget-bar";
 
 const BottomWidgetBarTemplate = WidgetBarTemplate.template($ => ({
-	style: iconStyle,
+	style: bottomBarIconsStyle,
 }));
 
 class BottomWidgetBar extends WidgetBar {
+	get iconStyle() { return bottomBarIconsStyle; }
+	get textStyle() { return bottomBarTextStyle; }
 	get Template() { return BottomWidgetBarTemplate; }
 }
 

@@ -14,7 +14,7 @@
  */
 
 import { observeWeather, getWeatherIcon } from "modules/weather-observer";
-import { iconStyle } from "assets";
+import { topBarIconsStyle } from "assets";
 import Widget from "modules/widget";
 
 //
@@ -41,7 +41,7 @@ class WeatherBehavior extends Behavior {
 //
 
 const WeatherTemplate = Label.template($ => ({
-	style: iconStyle,
+	style: $.iconStyle ?? topBarIconsStyle,
 	string: "",
 	Behavior: WeatherBehavior,
 }));

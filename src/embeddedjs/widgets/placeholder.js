@@ -18,13 +18,13 @@
  */
 
 import Widget from "modules/widget";
-import { iconStyle, dateStyle } from "assets";
+import { topBarIconsStyle, topBarTextStyle } from "assets";
 
 // Template created once at module init — never inside a getter or template body.
 const PlaceholderTemplate = Label.template($ => ({
 	top:    $.text ? -1 : 0, // nudge up to better align with icons
 	string: $.string ?? "\uF350", // thermometer by default
-	style:  $.text ? dateStyle : iconStyle,
+	style:  $.text ? ($.textStyle ?? topBarTextStyle) : ($.iconStyle ?? topBarIconsStyle),
 }));
 
 class PlaceholderWidget extends Widget {
