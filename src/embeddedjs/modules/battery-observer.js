@@ -68,7 +68,3 @@ Object.freeze(BatteryObserver);
 export function observeBattery(observer) {
 	return batteryObserver.observe(observer);
 }
-
-export function getBatterySample() {
-	return batteryObserver.value;
-}

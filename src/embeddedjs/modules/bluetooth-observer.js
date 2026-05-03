@@ -53,7 +53,3 @@ Object.freeze(BluetoothObserver);
 export function observeBluetooth(observer) {
 	return bluetoothObserver.observe(observer);
 }
-
-export function getBluetoothSample() {
-	return bluetoothObserver.value;
-}

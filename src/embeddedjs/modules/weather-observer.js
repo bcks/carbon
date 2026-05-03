@@ -254,6 +254,6 @@ export function getWeatherSample() {
 	return weatherObserver.value;
 }
 
-export { getWeatherIcon, getWeatherDescription };
+export { getWeatherIcon };
 
 export default weatherObserver;

@@ -61,4 +61,4 @@ const styles = Object.freeze({
 	bottomBarText:  new Style({ color: palette.WHITE, font: fonts.date, horizontal: "center" }),
 }, true);
 
-export { fonts, palette, colors, skins, styles };
+export { colors, skins, styles };
