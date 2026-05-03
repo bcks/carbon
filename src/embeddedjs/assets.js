@@ -43,12 +43,14 @@ const colors = Object.freeze({
 	progressFill:    palette.WHITE,
 });
 
+// Skins and styles are frozen with `deep: true` to prevent accidental mutation of nested objects.
+
 const skins = Object.freeze({
 	background: new Skin({ fill: colors.background }),
 	topBar:     new Skin({ fill: colors.topBar }),
 	graph:      new Skin({ fill: colors.graphBackground }),
 	progress:   new Skin({ fill: colors.progressTrack }),
-});
+}, true);
 
 const styles = Object.freeze({
 	time:           new Style({ color: palette.WHITE, font: fonts.time }),
@@ -57,6 +59,6 @@ const styles = Object.freeze({
 	topBarText:     new Style({ color: palette.BLACK, font: fonts.date, horizontal: "center" }),
 	bottomBarIcons: new Style({ color: palette.WHITE, font: fonts.icons, horizontal: "center" }),
 	bottomBarText:  new Style({ color: palette.WHITE, font: fonts.date, horizontal: "center" }),
-});
+}, true);
 
 export { fonts, palette, colors, skins, styles };
