@@ -76,8 +76,8 @@ const styles = Object.freeze({
 	date:           new Style({ color: palette.LIGHT_GREY, font: fonts.date }),
 	topBarIcons:    new Style({ color: palette.BLACK, font: fonts.icons, horizontal: "center" }),
 	topBarText:     new Style({ color: palette.BLACK, font: fonts.date, horizontal: "center" }),
-	bottomBarIcons: new Style({ color: palette.WHITE, font: fonts.icons, horizontal: "center" }),
-	bottomBarText:  new Style({ color: palette.WHITE, font: fonts.date, horizontal: "center" }),
+	bottomBarIcons: new Style({ color: palette.BLACK, font: fonts.icons, horizontal: "center" }),
+	bottomBarText:  new Style({ color: palette.BLACK, font: fonts.date, horizontal: "center" }),
 }, true);
 
 export { colors, skins, styles };
