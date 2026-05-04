@@ -26,7 +26,7 @@ const TEST_LOCATION = Object.freeze({
 });
 
 function buildCurrentUrl(latitude, longitude) {
-	return `${WEATHER_BASE_URL}?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&hourly=precipitation_probability&forecast_hours=24&daily=sunrise,sunset,temperature_2m_min,temperature_2m_max&forecast_days=1&temperature_unit=fahrenheit&timeformat=unixtime`;
+	return `${WEATHER_BASE_URL}?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&hourly=precipitation_probability,temperature_2m&forecast_hours=24&daily=sunrise,sunset,temperature_2m_min,temperature_2m_max&forecast_days=1&temperature_unit=fahrenheit&timeformat=unixtime`;
 }
 
 function clampInt(value, min, max) {
@@ -116,27 +116,37 @@ function fetchAndSendWeather() {
 			return requestJSON(weatherUrl);
 		})
 		.then(function(weatherData) {
-			if (!weatherData || !weatherData.current || !weatherData.hourly || !weatherData.hourly.precipitation_probability || !weatherData.daily || !weatherData.daily.sunrise || !weatherData.daily.sunset || !weatherData.daily.temperature_2m_min || !weatherData.daily.temperature_2m_max) {
+			if (!weatherData || !weatherData.current || !weatherData.hourly || !weatherData.hourly.precipitation_probability || !weatherData.hourly.temperature_2m || !weatherData.daily || !weatherData.daily.sunrise || !weatherData.daily.sunset || !weatherData.daily.temperature_2m_min || !weatherData.daily.temperature_2m_max) {
 				sendPayload({ WEATHER_ERROR: 2 });
 				return;
 			}
 
-			var source = weatherData.hourly.precipitation_probability.slice(0, 24);
-			var hourly = source.map(function(value) {
+			var precipSource = weatherData.hourly.precipitation_probability.slice(0, 24);
+			var hourlyPrecip = precipSource.map(function(value) {
 				return clampInt(value, 0, 100);
 			});
+			var tempSource = weatherData.hourly.temperature_2m.slice(0, 24);
+			var currentTemp = clampInt(weatherData.current.temperature_2m, -99, 199);
+			var hourlyTemp = tempSource.map(function(value) {
+				return clampInt(value, -99, 199);
+			});
 
-			while (hourly.length < 24)
-				hourly.push(0);
+			while (hourlyPrecip.length < 24)
+				hourlyPrecip.push(0);
+			while (hourlyTemp.length < 24)
+				hourlyTemp.push(currentTemp);
 
 			sendPayload({
-				WEATHER_TEMP: clampInt(weatherData.current.temperature_2m, -99, 199),
+				WEATHER_TEMP: currentTemp,
 				WEATHER_TEMP_LOW: clampInt(weatherData.daily.temperature_2m_min[0], -99, 199),
 				WEATHER_TEMP_HIGH: clampInt(weatherData.daily.temperature_2m_max[0], -99, 199),
+				WEATHER_TEMP_HOURLY_0: makeChunkString(hourlyTemp, 0, 8),
+				WEATHER_TEMP_HOURLY_1: makeChunkString(hourlyTemp, 8, 8),
+				WEATHER_TEMP_HOURLY_2: makeChunkString(hourlyTemp, 16, 8),
 				WEATHER_CODE: clampInt(weatherData.current.weather_code, 0, 99),
-				WEATHER_PRECIP_0: makeChunkString(hourly, 0, 8),
-				WEATHER_PRECIP_1: makeChunkString(hourly, 8, 8),
-				WEATHER_PRECIP_2: makeChunkString(hourly, 16, 8),
+				WEATHER_PRECIP_0: makeChunkString(hourlyPrecip, 0, 8),
+				WEATHER_PRECIP_1: makeChunkString(hourlyPrecip, 8, 8),
+				WEATHER_PRECIP_2: makeChunkString(hourlyPrecip, 16, 8),
 				WEATHER_SUNRISE: clampInt(weatherData.daily.sunrise[0], 0, 2147483647),
 				WEATHER_SUNSET: clampInt(weatherData.daily.sunset[0], 0, 2147483647),
 				WEATHER_ERROR: 0,

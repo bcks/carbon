@@ -28,6 +28,7 @@ const palette = Object.freeze({
 	LIGHT_GREY:    "#AAAAAA",
 	WHITE:         "#FFFFFF",
 	BLUE:          "#00AAFF",
+	RED:           "#FF0000",
 	TRANSPARENT:   "transparent",
 });
 
@@ -36,6 +37,7 @@ const colors = Object.freeze({
 	topBar:          palette.BLUE,
 	graphBackground: palette.BLACK,
 	graphBar:        palette.BLUE,
+	graphTempLine:   palette.RED,
 	graphDaylightBg: palette.DARK_GREY,
 	graphDaylight:   palette.WHITE,
 	slotMarker:      palette.LIGHT_GREY,

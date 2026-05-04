@@ -27,6 +27,9 @@ const WEATHER_KEYS = Object.freeze([
 	"WEATHER_TEMP",
 	"WEATHER_TEMP_LOW",
 	"WEATHER_TEMP_HIGH",
+	"WEATHER_TEMP_HOURLY_0",
+	"WEATHER_TEMP_HOURLY_1",
+	"WEATHER_TEMP_HOURLY_2",
 	"WEATHER_CODE",
 	"WEATHER_PRECIP_0",
 	"WEATHER_PRECIP_1",
@@ -35,6 +38,18 @@ const WEATHER_KEYS = Object.freeze([
 	"WEATHER_SUNSET",
 	"WEATHER_ERROR",
 ]);
+
+// Keep weather AppMessage buffers bounded.
+//
+// Using maximum inbox/outbox sizes at startup allocates ~8 KB each buffer and
+// can push Pebble heap usage high enough to cause a bootloop before
+// steady-state instrumentation begins.
+//
+// These sizes are sufficient for our compact weather payload while avoiding
+// max-buffer heap spikes.
+const WEATHER_MESSAGE_INPUT = 1024;
+const WEATHER_MESSAGE_OUTPUT = 256;
+
 
 //
 // WMO weather code to human-readable description
@@ -106,7 +121,7 @@ class WeatherObserver extends LazyObserver {
 		this.messageWritable = false;
 	}
 
-	parseChunk(value) {
+	parseChunk(value, min, max) {
 		if (typeof value !== "string" || !value.length)
 			return [];
 
@@ -115,7 +130,7 @@ class WeatherObserver extends LazyObserver {
 		for (let i = 0; i < parts.length; i++) {
 			const n = Math.round(Number(parts[i]));
 			if (Number.isFinite(n))
-				out.push(Math.max(0, Math.min(100, n)));
+				out.push(Math.max(min, Math.min(max, n)));
 		}
 		return out;
 	}
@@ -145,13 +160,20 @@ class WeatherObserver extends LazyObserver {
 			return;
 
 		const hourly = [
-			...this.parseChunk(data.get("WEATHER_PRECIP_0")),
-			...this.parseChunk(data.get("WEATHER_PRECIP_1")),
-			...this.parseChunk(data.get("WEATHER_PRECIP_2")),
+			...this.parseChunk(data.get("WEATHER_PRECIP_0"), 0, 100),
+			...this.parseChunk(data.get("WEATHER_PRECIP_1"), 0, 100),
+			...this.parseChunk(data.get("WEATHER_PRECIP_2"), 0, 100),
+		].slice(0, 24);
+		const temperatureHourly = [
+			...this.parseChunk(data.get("WEATHER_TEMP_HOURLY_0"), -99, 199),
+			...this.parseChunk(data.get("WEATHER_TEMP_HOURLY_1"), -99, 199),
+			...this.parseChunk(data.get("WEATHER_TEMP_HOURLY_2"), -99, 199),
 		].slice(0, 24);
 
 		while (hourly.length < 24)
 			hourly.push(0);
+		while (temperatureHourly.length < 24)
+			temperatureHourly.push(temperature);
 
 		const weather = {
 			timestamp: Date.now(),
@@ -161,6 +183,7 @@ class WeatherObserver extends LazyObserver {
 			weatherCode,
 			description: getWeatherDescription(weatherCode),
 			hourly,
+			temperatureHourly,
 			sunrise,
 			sunset,
 		};
@@ -202,6 +225,10 @@ class WeatherObserver extends LazyObserver {
 		const observer = this;
 		this.message = new Message({
 			keys: WEATHER_KEYS,
+			// Explicit input/output prevents Message from opening with maximum
+			// system buffer sizes, which previously caused startup instability.
+			input: WEATHER_MESSAGE_INPUT,
+			output: WEATHER_MESSAGE_OUTPUT,
 			onReadable() {
 				observer.onReadableMessage();
 			},
