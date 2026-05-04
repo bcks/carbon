@@ -9,7 +9,8 @@
  * subscribes, and is closed as soon as the last observer unsubscribes.
  * This keeps the runtime cost at zero when no weather-driven feature is active.
  *
- * Automatically refreshes every hour via hourchange event.
+ * Refreshes weather on a 15-minute cadence via minutechange events.
+ * Durable caching across watchface relaunches is handled in PKJS.
  *
  * @module modules/weather-observer
  *
@@ -113,10 +114,8 @@ function getWeatherIcon(code) {
 class WeatherObserver extends LazyObserver {
 	constructor() {
 		super();
-		this.cacheTime = 0;
-		this.cacheTTL = 3600000; // 1 hour in ms
 		this.lastRequestTime = 0;
-		this.hourListenerAdded = false;
+		this.minuteListenerAdded = false;
 		this.message = null;
 		this.messageWritable = false;
 	}
@@ -192,7 +191,6 @@ class WeatherObserver extends LazyObserver {
 		// console.log(`Hourly precip max: ${hourly.reduce((max, value) => (value > max ? value : max), 0)}%`);
 		// console.log(`Weather: ${weather.temperature}°F (${weather.temperatureLow}°/${weather.temperatureHigh}°), ${weather.description}`);
 
-		this.cacheTime = Date.now();
 		this.publish(weather);
 	}
 
@@ -247,12 +245,16 @@ class WeatherObserver extends LazyObserver {
 		this.ensureMessage();
 		this.requestWeather();
 
-		// Auto-refresh weather every hour via hourchange event
-		if (!this.hourListenerAdded) {
-			watch.addEventListener("hourchange", () => {
-				this.requestWeather();
+		// Trigger a refresh at minute 00/15/30/45 while active.
+		if (!this.minuteListenerAdded) {
+			watch.addEventListener("minutechange", (e) => {
+				const minute = e?.date?.getMinutes?.();
+				if (minute === undefined)
+					return;
+				if ((minute % 15) === 0)
+					this.requestWeather();
 			});
-			this.hourListenerAdded = true;
+			this.minuteListenerAdded = true;
 		}
 	}
 
