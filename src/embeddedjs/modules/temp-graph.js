@@ -52,7 +52,7 @@ class TempGraphBehavior extends Behavior {
 		this.data = null;
 	}
 
-	drawLine(port, color, x0, y0, x1, y1) {
+	drawFilledSegment(port, color, x0, y0, x1, y1, lineBottom) {
 		if (!Number.isFinite(x0) || !Number.isFinite(y0) || !Number.isFinite(x1) || !Number.isFinite(y1))
 			return;
 
@@ -65,14 +65,16 @@ class TempGraphBehavior extends Behavior {
 		const steps = Math.max(Math.abs(dx), Math.abs(dy));
 
 		if (steps === 0) {
-			port.fillColor(color, startX, startY, 1, 1);
+			const h = Math.max(1, (lineBottom - startY) + 1);
+			port.fillColor(color, startX, startY, 1, h);
 			return;
 		}
 
 		for (let i = 0; i <= steps; i++) {
 			const px = Math.round(startX + ((dx * i) / steps));
 			const py = Math.round(startY + ((dy * i) / steps));
-			port.fillColor(color, px, py, 1, 1);
+			const h = Math.max(1, (lineBottom - py) + 1);
+			port.fillColor(color, px, py, 1, h);
 		}
 	}
 
@@ -134,9 +136,12 @@ class TempGraphBehavior extends Behavior {
 
 			if (lastX >= 0) {
 				const segmentColor = this.getTempColor((lastTemp + clamped) / 2);
-				this.drawLine(port, segmentColor, lastX, lastY, xSafe, ySafe);
+				this.drawFilledSegment(port, segmentColor, lastX, lastY, xSafe, ySafe, lineBottom);
+			} else {
+				const firstColor = this.getTempColor(clamped);
+				const firstH = Math.max(1, (lineBottom - ySafe) + 1);
+				port.fillColor(firstColor, xSafe, ySafe, 1, firstH);
 			}
-			port.fillColor(this.getTempColor(clamped), xSafe, ySafe, 1, 1);
 			lastX = xSafe;
 			lastY = ySafe;
 			lastTemp = clamped;

@@ -19,7 +19,6 @@ import ProgressBar from "modules/progress-bar";
 
 /**
  * Returns the Application contents array for the gabbro platform.
- * Uses the same linear progress bar module as emery.
  */
 const Layout = Container.template($ => ({
 	contents: [

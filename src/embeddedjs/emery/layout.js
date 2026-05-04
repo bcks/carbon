@@ -62,10 +62,6 @@ import ProgressBar from "modules/progress-bar";
 
 /**
  * Returns the Application contents array for the emery platform.
- * Single full-height Column; ProgressBar is the last child.
- *
- * @param {object} $ - Piu template data (widgetConfig) passed from Application.
- * @returns {Array} Piu content array.
  */
 const Layout = Container.template($ => ({
 	contents: [
