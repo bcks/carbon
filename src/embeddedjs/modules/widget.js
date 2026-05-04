@@ -43,10 +43,6 @@ class WidgetBehavior extends Behavior {
 	onCreate(container, data) {
 		this.data = data;
 	}
-
-	onDisplaying(container) {
-		console.log(`${this.constructor.name} onDisplaying with data:`, JSON.stringify(this.data));
-	}
 }
 
 const WidgetTemplate = Content.template(() => ({}));

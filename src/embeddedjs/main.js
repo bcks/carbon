@@ -42,10 +42,7 @@ const widgetConfig = {
 
 class CarbonBehavior extends Behavior {
 	onCreate(app) {
-		// Fire an initial clock event so all labels show the current time/date
-		// immediately rather than waiting for the first minutechange.
-		app.distribute("onClockChanged", new Date());
-
+		// Callback is called immediately upon registration and once per minute.
 		watch.addEventListener("minutechange", (e) => {
 			app.distribute("onClockChanged", e.date);
 		});

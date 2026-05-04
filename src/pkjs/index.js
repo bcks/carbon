@@ -104,7 +104,7 @@ function requestCoordinates() {
 function sendPayload(payload) {
 	Pebble.sendAppMessage(payload,
 		function() { console.log("pkjs weather payload sent"); },
-		function(err) { console.log("pkjs weather payload failed: " + JSON.stringify(err)); }
+		function(err) { console.error("pkjs weather payload failed: " + JSON.stringify(err)); }
 	);
 }
 
@@ -143,7 +143,7 @@ function fetchAndSendWeather() {
 			});
 		})
 		.catch(function(e) {
-			console.log("pkjs weather fetch failed: " + e);
+			console.error("pkjs weather fetch failed: " + e);
 			sendPayload({ WEATHER_ERROR: 1 });
 		});
 }

@@ -121,7 +121,7 @@ class WeatherObserver extends LazyObserver {
 	}
 
 	onReadableMessage() {
-		console.log("Received weather message from PKJS");
+		// console.log("Received weather message from PKJS");
 		if (!this.message)
 			return;
 
@@ -131,7 +131,7 @@ class WeatherObserver extends LazyObserver {
 
 		const errorCode = data.get("WEATHER_ERROR");
 		if (errorCode && errorCode !== 0) {
-			console.log(`Weather PKJS error code: ${errorCode}`);
+			console.error(`Weather PKJS error code: ${errorCode}`);
 			return;
 		}
 
@@ -165,17 +165,16 @@ class WeatherObserver extends LazyObserver {
 			sunset,
 		};
 
-		const maxPrecip = hourly.reduce((max, value) => (value > max ? value : max), 0);
-		console.log(`Hourly precip (next ${hourly.length}h): [${hourly.join(", ")}]`);
-		console.log(`Hourly precip max: ${maxPrecip}%`);
-		console.log(`Weather: ${weather.temperature}°F (${weather.temperatureLow}°/${weather.temperatureHigh}°), ${weather.description}`);
+		// console.log(`Hourly precip (next ${hourly.length}h): [${hourly.join(", ")}]`);
+		// console.log(`Hourly precip max: ${hourly.reduce((max, value) => (value > max ? value : max), 0)}%`);
+		// console.log(`Weather: ${weather.temperature}°F (${weather.temperatureLow}°/${weather.temperatureHigh}°), ${weather.description}`);
 
 		this.cacheTime = Date.now();
 		this.publish(weather);
 	}
 
 	requestWeather() {
-		console.log("Requesting weather from PKJS...");
+		// console.log("Maybe requesting weather from PKJS...");
 		if (!this.message || !this.messageWritable)
 			return;
 
@@ -189,14 +188,14 @@ class WeatherObserver extends LazyObserver {
 			this.message.write(new Map([
 				["WEATHER_REQUEST", now & 0x7fffffff],
 			]));
-			console.log("Requested weather from PKJS");
+			// console.log("Requested weather from PKJS");
 		} catch (e) {
-			console.log(`Weather request write failed: ${e}`);
+			console.error(`Weather request write failed: ${e}`);
 		}
 	}
 
 	ensureMessage() {
-		console.log("Ensuring weather message channel...");
+		// console.log("Ensuring weather message channel...");
 		if (this.message)
 			return;
 
@@ -217,7 +216,7 @@ class WeatherObserver extends LazyObserver {
 	}
 
 	onStart() {
-		console.log("Starting weather observer...");
+		// console.log("Starting weather observer...");
 		this.ensureMessage();
 		this.requestWeather();
 
@@ -231,7 +230,7 @@ class WeatherObserver extends LazyObserver {
 	}
 
 	onStop() {
-		console.log("Stopping weather observer...");
+		// console.log("Stopping weather observer...");
 		if (this.message) {
 			this.message.close();
 			this.message = null;
