@@ -20,36 +20,7 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-import Message from "pebble/message";
-import LazyObserver from "modules/lazy-observer";
-
-const WEATHER_KEYS = Object.freeze([
-	"WEATHER_REQUEST",
-	"WEATHER_TEMP",
-	"WEATHER_TEMP_LOW",
-	"WEATHER_TEMP_HIGH",
-	"WEATHER_TEMP_HOURLY_0",
-	"WEATHER_TEMP_HOURLY_1",
-	"WEATHER_TEMP_HOURLY_2",
-	"WEATHER_CODE",
-	"WEATHER_PRECIP_0",
-	"WEATHER_PRECIP_1",
-	"WEATHER_PRECIP_2",
-	"WEATHER_SUNRISE",
-	"WEATHER_SUNSET",
-	"WEATHER_ERROR",
-]);
-
-// Keep weather AppMessage buffers bounded.
-//
-// Using maximum inbox/outbox sizes at startup allocates ~8 KB each buffer and
-// can push Pebble heap usage high enough to cause a bootloop before
-// steady-state instrumentation begins.
-//
-// These sizes are sufficient for our compact weather payload while avoiding
-// max-buffer heap spikes.
-const WEATHER_MESSAGE_INPUT = 1024;
-const WEATHER_MESSAGE_OUTPUT = 256;
+import AppMessageObserver from "modules/app-message-observer";
 
 
 //
@@ -111,14 +82,9 @@ function getWeatherIcon(code) {
 // WeatherObserver — lazy location + fetch coordination
 //
 
-class WeatherObserver extends LazyObserver {
-	constructor() {
-		super();
-		this.lastRequestTime = 0;
-		this.minuteListenerAdded = false;
-		this.message = null;
-		this.messageWritable = false;
-	}
+class WeatherObserver extends AppMessageObserver {
+	lastRequestTime = 0;
+	minuteListenerAdded = false;
 
 	parseChunk(value, min, max) {
 		if (typeof value !== "string" || !value.length)
@@ -134,12 +100,8 @@ class WeatherObserver extends LazyObserver {
 		return out;
 	}
 
-	onReadableMessage() {
+	onReadableMessage(data) {
 		// console.log("Received weather message from PKJS");
-		if (!this.message)
-			return;
-
-		const data = this.message.read();
 		if (!data)
 			return;
 
@@ -196,7 +158,7 @@ class WeatherObserver extends LazyObserver {
 
 	requestWeather() {
 		// console.log("Maybe requesting weather from PKJS...");
-		if (!this.message || !this.messageWritable)
+		if (!this.messageWritable)
 			return;
 
 		const now = Date.now();
@@ -206,7 +168,7 @@ class WeatherObserver extends LazyObserver {
 		this.lastRequestTime = now;
 
 		try {
-			this.message.write(new Map([
+			this.writeMessage(new Map([
 				["WEATHER_REQUEST", now & 0x7fffffff],
 			]));
 			// console.log("Requested weather from PKJS");
@@ -215,34 +177,8 @@ class WeatherObserver extends LazyObserver {
 		}
 	}
 
-	ensureMessage() {
-		// console.log("Ensuring weather message channel...");
-		if (this.message)
-			return;
-
-		const observer = this;
-		this.message = new Message({
-			keys: WEATHER_KEYS,
-			// Explicit input/output prevents Message from opening with maximum
-			// system buffer sizes, which previously caused startup instability.
-			input: WEATHER_MESSAGE_INPUT,
-			output: WEATHER_MESSAGE_OUTPUT,
-			onReadable() {
-				observer.onReadableMessage();
-			},
-			onWritable() {
-				observer.messageWritable = true;
-				observer.requestWeather();
-			},
-			onSuspend() {
-				observer.messageWritable = false;
-			},
-		});
-	}
-
 	onStart() {
-		// console.log("Starting weather observer...");
-		this.ensureMessage();
+		super.onStart();
 		this.requestWeather();
 
 		// Trigger a refresh at minute 00/15/30/45 while active.
@@ -259,12 +195,11 @@ class WeatherObserver extends LazyObserver {
 	}
 
 	onStop() {
-		// console.log("Stopping weather observer...");
-		if (this.message) {
-			this.message.close();
-			this.message = null;
-		}
-		this.messageWritable = false;
+		super.onStop();
+	}
+
+	onWritableMessage() {
+		this.requestWeather();
 	}
 }
 

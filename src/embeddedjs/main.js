@@ -24,15 +24,16 @@ const widgetConfig = {
 	// Gabbro top: #1 bottom-left, #2 top-center, #3 bottom-right.
 	// Gabbro bottom: #1 top-left, #2 bottom-center, #3 top-right.
 	topWidgets: [
-		{ name: "battery", config: { onlyWarningCharging: true } },
-		// { name: "placeholder", config: { icon: "\uF110", text: "Hi" } },
-		null,
-		{ name: "bluetooth", config: { onlyDisconnected: true } },
+		// { name: "heartrate", config: {} },
+		// { name: "steps", config: {} },
+		// { name: "bluetooth", config: { onlyDisconnected: true } },
 	],
 	bottomWidgets: [
-		{ name: "weather", config: { mode: "low", showIcon: true, showText: true } },
-		{ name: "weather", config: { mode: "current", showIcon: true, showText: true } },
-		{ name: "weather", config: { mode: "high", showIcon: true, showText: true } },
+		// TODO: Re-enable weather after fixing memory constraints.
+		// (3 weather widget slots were contributing to startup crash)
+		// { name: "weather", config: { mode: "low", showIcon: true, showText: true } },
+		// { name: "weather", config: { mode: "current", showIcon: true, showText: true } },
+		// { name: "weather", config: { mode: "high", showIcon: true, showText: true } },
 	],
 };
 

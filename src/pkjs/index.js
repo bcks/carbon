@@ -246,4 +246,19 @@ Pebble.addEventListener("appmessage", function(e) {
 
 	if (e && e.payload && e.payload.WEATHER_REQUEST !== undefined)
 		fetchAndSendWeather();
+
+	// Relay health data back to the watch so the JS layer can receive it.
+	if (e && e.payload && (e.payload.HEALTH_STEPS !== undefined || e.payload.HEART_RATE_BPM !== undefined)) {
+		const relay = {};
+		if (e.payload.HEALTH_STEPS !== undefined)
+			relay.HEALTH_STEPS = e.payload.HEALTH_STEPS;
+		if (e.payload.HEART_RATE_BPM !== undefined)
+			relay.HEART_RATE_BPM = e.payload.HEART_RATE_BPM;
+
+		Pebble.sendAppMessage(
+			relay,
+			function() { console.log("pkjs health relay sent"); },
+			function(err) { console.error("pkjs health relay failed: " + JSON.stringify(err)); }
+		);
+	}
 });

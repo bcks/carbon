@@ -23,7 +23,8 @@
       "watchface": true
     },
     "capabilities": [
-      "location"
+      "location",
+      "health"
     ],
     "messageKeys": [
       "WEATHER_REQUEST",
@@ -39,7 +40,9 @@
       "WEATHER_PRECIP_2",
       "WEATHER_SUNRISE",
       "WEATHER_SUNSET",
-      "WEATHER_ERROR"
+      "WEATHER_ERROR",
+      "HEALTH_STEPS",
+      "HEART_RATE_BPM"
     ],
     "resources": {
       "media": []

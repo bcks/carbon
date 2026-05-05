@@ -1,4 +1,5 @@
 #include <pebble.h>
+#include "modules/health_relay.h"
 
 // XS virtual machine heap pools.
 //
@@ -41,13 +42,16 @@
 // for the "instruments key" log lines. They report "Slot used", "Chunk used",
 // "Stack used", and "System bytes free" every second. If any "used" value
 // is close to its pool size when the crash occurs, that pool is the culprit.
-#define CARBON_SLOT_SIZE  37888
-#define CARBON_CHUNK_SIZE 21504
+#define CARBON_SLOT_SIZE  40960
+#define CARBON_CHUNK_SIZE 20480
 #define CARBON_STACK_SIZE 4096
 
 int main(void) {
 	Window *w = window_create();
 	window_stack_push(w, true);
+
+	// Relay health data from C -> phone -> watch JS.
+	health_relay_init();
 
 	ModdableCreationRecord creation = {
 		.recordSize = sizeof(ModdableCreationRecord),
@@ -60,5 +64,6 @@ int main(void) {
 	};
 	moddable_createMachine(&creation);
 
+	health_relay_deinit();
 	window_destroy(w);
 }
