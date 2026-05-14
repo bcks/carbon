@@ -76,14 +76,16 @@ static void prv_update_proc(Layer *layer, GContext *ctx) {
 	//   heavy storm  → bright blue (GColorVividCerulean) + lightning bolt
 	//   hail storm   → white       (GColorWhite) + lightning bolt
 	for (int i = 0; i < GRAPH_HOURS; i++) {
-		if (pl->prob[i] == 0)
-			continue;
 		int x0 = graph_x + (long)i * graph_w / GRAPH_HOURS;
 		int x1 = graph_x + (long)(i + 1) * graph_w / GRAPH_HOURS;
-		int bar_h = (pl->prob[i] * (layer_h - 2)) / 100;
 		int bar_w = x1 - x0 - 1;
 		if (bar_w < 1)
 			bar_w = 1;
+
+		if (pl->prob[i] == 0)
+			continue;
+
+		int bar_h = (pl->prob[i] * (layer_h - 2)) / 100;
 
 #if defined(PBL_COLOR)
 		uint8_t cat = prv_precip_category(pl->hourly_code[i]);

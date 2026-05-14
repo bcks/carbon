@@ -19,6 +19,7 @@ struct IconBarLayer {
 	bool bt_connected;
 	WeatherCondition condition;
 	bool is_day;
+	bool weather_disconnected;
 };
 
 static const char *prv_battery_icon(int pct, bool charging) {
@@ -105,21 +106,29 @@ static void prv_update_proc(Layer *layer, GContext *ctx) {
 	    sl->icon_font, GRect(0, y0, graph_x, icon_size),
 	    GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
 
-	// Slot 1: bluetooth (only when disconnected)
-	if (!sl->bt_connected) {
+	// Slot 1: connection status — BT disconnect takes priority; signal-off
+	// shown for both fully-expired and partially-expired weather data.
+	const char *conn_icon = NULL;
+	if (!sl->bt_connected)
+		conn_icon = ICON_BLUETOOTH__OFF;
+	else if (sl->weather_disconnected)
+		conn_icon = ICON_CONNECTION_SIGNAL__OFF;
+	if (conn_icon) {
 		int y1 = zone_h + (zone_h - icon_size) / 2;
-		graphics_draw_text(ctx, ICON_BLUETOOTH__OFF, sl->icon_font,
-		                   GRect(0, y1, graph_x, icon_size),
+		graphics_draw_text(
+		    ctx, conn_icon, sl->icon_font, GRect(0, y1, graph_x, icon_size),
+		    GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
+	}
+
+	// Slot 2: weather condition — only shown when data is available for the
+	// current hour (condition != UNKNOWN means set_condition was called).
+	if (sl->condition != WEATHER_CONDITION_UNKNOWN) {
+		int y2 = 2 * zone_h + (zone_h - icon_size) / 2;
+		graphics_draw_text(ctx, prv_condition_icon(sl->condition, sl->is_day),
+		                   sl->icon_font, GRect(0, y2, graph_x, icon_size),
 		                   GTextOverflowModeTrailingEllipsis,
 		                   GTextAlignmentCenter, NULL);
 	}
-
-	// Slot 2: current weather condition
-	int y2 = 2 * zone_h + (zone_h - icon_size) / 2;
-	graphics_draw_text(ctx, prv_condition_icon(sl->condition, sl->is_day),
-	                   sl->icon_font, GRect(0, y2, graph_x, icon_size),
-	                   GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter,
-	                   NULL);
 }
 
 IconBarLayer *icon_bar_layer_create(GRect frame) {
@@ -133,6 +142,7 @@ IconBarLayer *icon_bar_layer_create(GRect frame) {
 	sl->bt_connected = true;
 	sl->condition = WEATHER_CONDITION_UNKNOWN;
 	sl->is_day = true;
+	sl->weather_disconnected = true; // shown until first weather fetch
 
 #if PBL_DISPLAY_HEIGHT >= 228
 	sl->icon_font = fonts_load_custom_font(
@@ -191,5 +201,12 @@ void icon_bar_layer_set_daytime(IconBarLayer *layer, bool is_day) {
 	if (!layer)
 		return;
 	layer->is_day = is_day;
+	layer_mark_dirty(layer->layer);
+}
+
+void icon_bar_layer_set_disconnected(IconBarLayer *layer, bool disconnected) {
+	if (!layer)
+		return;
+	layer->weather_disconnected = disconnected;
 	layer_mark_dirty(layer->layer);
 }

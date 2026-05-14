@@ -19,6 +19,7 @@ struct TempLayer {
 	int8_t hourly[GRAPH_HOURS];
 	int8_t apparent_hourly[GRAPH_HOURS];
 	uint8_t current_hour;
+	uint8_t hours_remaining;
 	bool celsius;
 };
 
@@ -156,7 +157,7 @@ static void prv_update_proc(Layer *layer, GContext *ctx) {
 	              : GColorRed)
 
 	// Pass 1: dark fills
-	for (int i = 1; i < 25; i++) {
+	for (int i = 1; i <= (int)tl->hours_remaining && i < 25; i++) {
 		int avg = ((int)pts[i - 1] + (int)pts[i]) / 2;
 		graphics_context_set_fill_color(ctx, DARK_TEMP_COLOR(TEMP_TO_F(avg)));
 		int x0 = spx[i - 1], y0 = spy[i - 1], x1 = spx[i], y1 = spy[i];
@@ -177,7 +178,7 @@ static void prv_update_proc(Layer *layer, GContext *ctx) {
 
 	// Pass 2: light-colored actual-temp line on top of the fill
 	graphics_context_set_stroke_width(ctx, 1);
-	for (int i = 1; i < 25; i++) {
+	for (int i = 1; i <= (int)tl->hours_remaining && i < 25; i++) {
 		int avg = ((int)pts[i - 1] + (int)pts[i]) / 2;
 		graphics_context_set_stroke_color(ctx,
 		                                  LIGHT_TEMP_COLOR(TEMP_TO_F(avg)));
@@ -187,7 +188,7 @@ static void prv_update_proc(Layer *layer, GContext *ctx) {
 
 	// Pass 3: white apparent-temp line over everything
 	graphics_context_set_stroke_color(ctx, GColorWhite);
-	for (int i = 1; i < 25; i++) {
+	for (int i = 1; i <= (int)tl->hours_remaining && i < 25; i++) {
 		graphics_draw_line(ctx, GPoint(apx[i - 1], apy[i - 1]),
 		                   GPoint(apx[i], apy[i]));
 	}
@@ -199,26 +200,42 @@ static void prv_update_proc(Layer *layer, GContext *ctx) {
 	// B&W: white actual-temp line + dotted apparent-temp line.
 	graphics_context_set_stroke_width(ctx, 1);
 	graphics_context_set_stroke_color(ctx, GColorWhite);
-	for (int i = 1; i < 25; i++) {
+	for (int i = 1; i <= (int)tl->hours_remaining && i < 25; i++) {
 		graphics_draw_line(ctx, GPoint(spx[i - 1], spy[i - 1]),
 		                   GPoint(spx[i], spy[i]));
 	}
 
 	// Pebble's b&w path does not offer dashed strokes, so render the apparent
 	// temperature as sampled pixels along each segment instead.
-	for (int i = 1; i < 25; i++) {
+	for (int i = 1; i <= (int)tl->hours_remaining && i < 25; i++) {
 		graph_draw_dotted_line(ctx, GPoint(apx[i - 1], apy[i - 1]),
 		                       GPoint(apx[i], apy[i]), 3);
 	}
 #endif
 
 	// Noon/midnight ticks — temp is the bottommost graph layer, draw bottom
-	// only Black ticks on color platforms so they contrast against the filled
-	// color area.
-	graphics_context_set_stroke_color(
-	    ctx, PBL_IF_COLOR_ELSE(GColorBlack, GColorWhite));
-	graph_draw_ticks(ctx, graph_x, graph_w, lh, tl->current_hour, 4, false,
-	                 true);
+	// only. Each tick is colored individually: black when it falls within the
+	// sparkline fill (contrasts against color), white when it falls in the
+	// empty region or there is no sparkline at all.
+	{
+		int bar_w = graph_w / GRAPH_HOURS;
+		int offsets[2] = {
+		    (12 - (int)tl->current_hour + 24) % 24, // noon
+		    (24 - (int)tl->current_hour) % 24,      // midnight
+		};
+		graphics_context_set_stroke_width(ctx, 1);
+		for (int i = 0; i < 2; i++) {
+			int off = offsets[i];
+			if (off == 0)
+				continue;
+			bool in_sparkline = (off < (int)tl->hours_remaining);
+			graphics_context_set_stroke_color(
+			    ctx, PBL_IF_COLOR_ELSE(in_sparkline ? GColorBlack : GColorWhite,
+			                           GColorWhite));
+			int tx = graph_x + off * bar_w;
+			graphics_draw_line(ctx, GPoint(tx, lh - 4), GPoint(tx, lh - 1));
+		}
+	}
 }
 
 TempLayer *temp_layer_create(GRect frame) {
@@ -229,6 +246,7 @@ TempLayer *temp_layer_create(GRect frame) {
 	tl->high = 0;
 	tl->low = 0;
 	tl->current_hour = 0;
+	tl->hours_remaining = GRAPH_HOURS;
 	tl->celsius = false;
 	memset(tl->hourly, 0, sizeof(tl->hourly));
 	memset(tl->apparent_hourly, 0, sizeof(tl->apparent_hourly));
@@ -252,14 +270,15 @@ Layer *temp_layer_get_layer(TempLayer *layer) {
 
 void temp_layer_set_data(TempLayer *layer, int16_t current, int16_t high,
                          int16_t low, const int8_t hourly[24],
-                         const int8_t apparent_hourly[24],
-                         uint8_t current_hour) {
+                         const int8_t apparent_hourly[24], uint8_t current_hour,
+                         uint8_t hours_remaining) {
 	if (!layer)
 		return;
 	layer->current = current;
 	layer->high = high;
 	layer->low = low;
 	layer->current_hour = current_hour;
+	layer->hours_remaining = hours_remaining;
 	memcpy(layer->hourly, hourly, GRAPH_HOURS);
 	memcpy(layer->apparent_hourly, apparent_hourly, GRAPH_HOURS);
 	layer_mark_dirty(layer->layer);
@@ -269,5 +288,14 @@ void temp_layer_set_unit(TempLayer *layer, bool celsius) {
 	if (!layer)
 		return;
 	layer->celsius = celsius;
+	layer_mark_dirty(layer->layer);
+}
+
+void temp_layer_set_current_hour(TempLayer *layer, uint8_t current_hour,
+                                 uint8_t hours_remaining) {
+	if (!layer)
+		return;
+	layer->current_hour = current_hour;
+	layer->hours_remaining = hours_remaining;
 	layer_mark_dirty(layer->layer);
 }
