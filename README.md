@@ -31,6 +31,8 @@ There are several other weather-focused Pebble watchfaces that might look simila
 - Temperature unit: Auto (default), Celsius, or Fahrenheit
 - Date format: "Monday, 1/15" default, several other presets (please open an issue if your preferred date format isn't available)
 - Battery indicator: Icon (default), Percentage, or Off
+- Show Timezone: On (default) or Off
+- Show AM/PM / 24h Indicator: On (default) or Off
 
 ## To do
 
