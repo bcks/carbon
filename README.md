@@ -13,7 +13,7 @@ There are several other weather-focused Pebble watchfaces that might look simila
 ## Features
 
 - The current time, of course, with a large, high-contrast font.
-- The current date and day of week.
+- The current date and day of week in the system locale's language.
 - The current location and timezone.
 - Current temperature and high/low for the day.
 - 24-hour temperature graph with secondary apparent temperature line.
@@ -42,7 +42,8 @@ There are several other weather-focused Pebble watchfaces that might look simila
 - [x] Customize battery indicator (e.g. show percentage instead of icon)
 - [x] Customize temperature unit
 - [ ] Customize color scheme (e.g. light mode, accent colors)
-- [ ] Localization
+- [x] Localization (system locale)
+- [ ] Custom locale support
 - [ ] Bluetooth disconnect vibration
 - [ ] Quiet time indicator
 - [ ] Support round watches (e.g. Pebble Round 2)
