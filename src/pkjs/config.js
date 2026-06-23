@@ -26,6 +26,16 @@ module.exports = [
 				'defaultValue': 'Weather',
 			},
 			{
+				'type': 'input',
+				'messageKey': 'SETTING_LOCATION',
+				'label': 'Location',
+				'description': 'Override GPS with a city name (e.g., "Chicago, IL" or "London, UK"). Leave blank to use device GPS.',
+				'defaultValue': '',
+				'attributes': {
+					'placeholder': 'e.g., Chicago, IL',
+				},
+			},
+			{
 				'type': 'select',
 				'messageKey': 'SETTING_TEMP_UNIT',
 				'label': 'Temperature Unit',

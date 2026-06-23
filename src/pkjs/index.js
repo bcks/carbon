@@ -16,6 +16,7 @@
 
 var WEATHER_BASE_URL = 'https://api.open-meteo.com/v1/forecast';
 var GEOCODE_BASE_URL = 'https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode';
+var FORWARD_GEOCODE_BASE_URL = 'https://nominatim.openstreetmap.org/search';
 var CACHE_KEY = 'carbon.weather.v3';
 var CACHE_TTL_MS = 15 * 60 * 1000;  // 15 minutes
 
@@ -79,6 +80,60 @@ function getTempUnit() {
 		}
 	} catch (e) {}
 	return shouldUseFahrenheit() ? 'fahrenheit' : 'celsius';
+}
+
+/**
+ * Returns the manual location string from Clay settings, or null if not set.
+ *
+ * @returns {string|null}
+ */
+function getLocationSetting() {
+	try {
+		var raw = localStorage.getItem('clay-settings');
+		if (raw) {
+			var s = JSON.parse(raw);
+			var loc = s['SETTING_LOCATION'];
+			if (loc !== null && loc !== undefined) {
+				var v = (typeof loc === 'object' && 'value' in loc) ? loc.value : loc;
+				if (typeof v === 'string' && v.trim().length > 0) return v.trim();
+			}
+		}
+	} catch (e) {}
+	return null;
+}
+
+/**
+ * Forward-geocode a city/state query via Nominatim, returning lat/lon in the callback.
+ *
+ * @param {string}   query     City and state string (e.g., "Chicago, IL").
+ * @param {Function} callback  Called with (err, lat, lon) on completion.
+ */
+function forwardGeocode(query, callback) {
+	var url = FORWARD_GEOCODE_BASE_URL +
+		'?format=json&limit=1&q=' + encodeURIComponent(query);
+
+	xhrGet(url, function(err, responseText) {
+		if (err) {
+			callback('Forward geocode request error: ' + err);
+			return;
+		}
+		try {
+			var results = JSON.parse(responseText);
+			if (!results || results.length === 0) {
+				callback('No geocode results for: ' + query);
+				return;
+			}
+			var lat = parseFloat(results[0].lat);
+			var lon = parseFloat(results[0].lon);
+			if (isNaN(lat) || isNaN(lon)) {
+				callback('Invalid coordinates in geocode result');
+				return;
+			}
+			callback(null, lat, lon);
+		} catch (e) {
+			callback('Forward geocode parse error: ' + e);
+		}
+	});
 }
 
 /**
@@ -240,19 +295,27 @@ function sendToWatch(payload) {
 }
 
 /**
- * Fetch fresh weather and city name in parallel, then send to watch.
+ * Fetch fresh weather and (optionally) city name in parallel, then send to watch.
+ * When manualLocation is provided the reverse geocode is skipped and manualLocation
+ * is used directly as the city name displayed on the watch.
  *
- * @param {number} lat  Device latitude in decimal degrees.
- * @param {number} lon  Device longitude in decimal degrees.
+ * @param {number}      lat             Device/geocoded latitude in decimal degrees.
+ * @param {number}      lon             Device/geocoded longitude in decimal degrees.
+ * @param {string|null} [manualLocation] User-supplied location string, or null for GPS mode.
  */
-function fetchAndSend(lat, lon) {
+function fetchAndSend(lat, lon, manualLocation) {
 	var weatherDone = false;
-	var cityDone    = false;
+	var cityDone    = !!manualLocation;
 	var weatherOk   = false;
 	var payload     = {};
 
 	var tempUnit = getTempUnit();
 	payload.temp_unit = tempUnit;
+	payload.location_query = manualLocation || null;
+
+	if (manualLocation) {
+		payload.city_name = manualLocation.substring(0, 23);
+	}
 
 	function tryFinish() {
 		if (!weatherDone || !cityDone) return;
@@ -330,46 +393,63 @@ function fetchAndSend(lat, lon) {
 		tryFinish();
 	});
 
-	// ArcGIS reverse geocode for city name
-	var geocodeUrl = GEOCODE_BASE_URL +
-		'?f=json&langCode=EN&location=' + lon + ',' + lat;
+	if (!manualLocation) {
+		// ArcGIS reverse geocode for city name
+		var geocodeUrl = GEOCODE_BASE_URL +
+			'?f=json&langCode=EN&location=' + lon + ',' + lat;
 
-	xhrGet(geocodeUrl, function(err, responseText) {
-		if (err) {
-			console.log('Carbon: geocode error: ' + err);
-			payload.city_name = 'Unknown';
+		xhrGet(geocodeUrl, function(err, responseText) {
+			if (err) {
+				console.log('Carbon: geocode error: ' + err);
+				payload.city_name = 'Unknown';
+				cityDone = true;
+				tryFinish();
+				return;
+			}
+			try {
+				var json = JSON.parse(responseText);
+				var addr = json && json.address;
+				payload.city_name = (addr && (addr.City || addr.ShortLabel)) || 'Unknown';
+			} catch (e) {
+				payload.city_name = 'Unknown';
+			}
 			cityDone = true;
 			tryFinish();
-			return;
-		}
-		try {
-			var json = JSON.parse(responseText);
-			var addr = json && json.address;
-			payload.city_name = (addr && (addr.City || addr.ShortLabel)) || 'Unknown';
-		} catch (e) {
-			payload.city_name = 'Unknown';
-		}
-		cityDone = true;
-		tryFinish();
-	});
+		});
+	}
 }
 
 /**
- * Check the local cache and send if still valid; otherwise acquire geolocation
- * and call fetchAndSend.
+ * Check the local cache and send if still valid; otherwise acquire location
+ * (from the manual setting or device GPS) and call fetchAndSend.
  */
 function getWeather() {
-	// Check cache first
+	var locationQuery = getLocationSetting();
+
 	var cache = readCache();
 	if (cache && cache.expiresAt > Date.now()) {
-		console.log('Carbon: using cached weather');
-		// Re-evaluate unit in case locale changed; re-fetch if unit differs
-		var cachedUnit = cache.payload && cache.payload.temp_unit;
-		if (cachedUnit && cachedUnit === getTempUnit()) {
-			sendToWatch(cache.payload);
+		var p = cache.payload;
+		if (p && p.temp_unit === getTempUnit() && p.location_query === locationQuery) {
+			console.log('Carbon: using cached weather');
+			sendToWatch(p);
 			return;
 		}
-		console.log('Carbon: temp unit changed, refreshing weather');
+		console.log('Carbon: settings changed, refreshing weather');
+	}
+
+	if (locationQuery) {
+		forwardGeocode(locationQuery, function(err, lat, lon) {
+			if (err) {
+				console.log('Carbon: forward geocode failed: ' + err);
+				if (cache) {
+					console.log('Carbon: using stale cache after geocode failure');
+					sendToWatch(cache.payload);
+				}
+				return;
+			}
+			fetchAndSend(lat, lon, locationQuery);
+		});
+		return;
 	}
 
 	navigator.geolocation.getCurrentPosition(
@@ -378,7 +458,6 @@ function getWeather() {
 		},
 		function(err) {
 			console.log('Carbon: geolocation error: ' + err.message);
-			// Fall back to stale cache if available
 			if (cache) {
 				console.log('Carbon: using stale cache');
 				sendToWatch(cache.payload);
