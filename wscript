@@ -6,6 +6,8 @@
 # set of demo data.
 #
 import os.path
+import json
+import subprocess
 
 top = '.'
 out = 'build'
@@ -31,6 +33,29 @@ def configure(ctx):
 
 def build(ctx):
 	ctx.load('pebble_sdk')
+
+	# Generate .buildinfo.json from git state and package.json
+	def git(*args):
+		try:
+			return subprocess.check_output(
+				['git'] + list(args),
+				cwd=ctx.path.abspath(),
+				stderr=subprocess.DEVNULL
+			).decode().strip()
+		except Exception:
+			return None
+
+	import datetime
+	pkg = json.loads(ctx.path.find_node('package.json').read())
+	ctx.path.make_node('.buildinfo.json').write(
+		json.dumps({
+			'version':   pkg['version'],
+			'hash':      git('rev-parse', '--short', 'HEAD') or 'unknown',
+			'branch':    git('rev-parse', '--abbrev-ref', 'HEAD') or 'unknown',
+			'dirty':     bool(git('status', '--porcelain')),
+			'buildDate': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+		}, indent=2) + '\n'
+	)
 
 	build_worker = os.path.exists('worker_src')
 	binaries = []

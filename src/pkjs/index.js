@@ -14,14 +14,19 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-var WEATHER_BASE_URL = 'https://api.open-meteo.com/v1/forecast';
-var GEOCODE_BASE_URL = 'https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode';
-var CACHE_KEY = 'carbon.weather.v3';
-var CACHE_TTL_MS = 15 * 60 * 1000;  // 15 minutes
+var {
+	WEATHER_BASE_URL,
+	GEOCODE_BASE_URL,
+	CACHE_KEY,
+	CACHE_TTL_MS,
+} = require('./constants');
+
+var buildInfo = require('../../.buildinfo.json');
 
 var Clay = require('@rebble/clay');
 var clayConfig = require('./config');
 var clay = new Clay(clayConfig, null, { autoHandleEvents: false });
+clay.registerComponent(require('./config/debug'));
 
 /**
  * Make a GET request.
@@ -253,6 +258,8 @@ function fetchAndSend(lat, lon) {
 
 	var tempUnit = getTempUnit();
 	payload.temp_unit = tempUnit;
+	payload.lat = lat;
+	payload.lon = lon;
 
 	function tryFinish() {
 		if (!weatherDone || !cityDone) return;
@@ -388,6 +395,32 @@ function getWeather() {
 	);
 }
 
+/**
+ * Build a debug snapshot for the Clay config page.
+ * Returns a plain object whose keys become collapsible sections in the
+ * debug-info component; values are serialised as JSON in the display.
+ *
+ * @returns {Object}
+ */
+function formatDebugInfo() {
+	var result = {
+		buildInfo,
+	};
+	try {
+		var rawCache = localStorage.getItem(CACHE_KEY);
+		result.cache = rawCache ? JSON.parse(rawCache) : null;
+	} catch (e) {
+		result.cache = null;
+	}
+	try {
+		var rawSettings = localStorage.getItem('clay-settings');
+		result.settings = rawSettings ? JSON.parse(rawSettings) : null;
+	} catch (e) {
+		result.settings = null;
+	}
+	return result;
+}
+
 //
 // Event listeners
 //
@@ -398,6 +431,7 @@ Pebble.addEventListener('ready', function() {
 });
 
 Pebble.addEventListener('showConfiguration', function() {
+	clay.meta.userData.debugInfo = formatDebugInfo();
 	Pebble.openURL(clay.generateUrl());
 });
 

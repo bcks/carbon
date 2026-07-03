@@ -7,7 +7,7 @@
  * @link      https://cr0ybot.com/project/pebble-watchface-carbon
  */
 
-const { version } = require("../../package.json");
+const { version, hash } = require('../../.buildinfo.json');
 
 module.exports = [
 	{
@@ -16,7 +16,7 @@ module.exports = [
 	},
 	{
 		'type': 'text',
-		'defaultValue': `v${version}`,
+		'defaultValue': `v${version} (${hash})`,
 	},
 	{
 		'type': 'section',
@@ -32,9 +32,9 @@ module.exports = [
 				'description': '"Auto" detects your locale (US = °F, everywhere else = °C).',
 				'defaultValue': -1,
 				'options': [
-					{ 'label': 'Auto (locale)', 'value': -1 },
-					{ 'label': 'Celsius (°C)',  'value': 0  },
-					{ 'label': 'Fahrenheit (°F)', 'value': 1 },
+					{ 'label': 'Auto (locale)',   'value': -1 },
+					{ 'label': 'Celsius (°C)',    'value': 0  },
+					{ 'label': 'Fahrenheit (°F)', 'value': 1  },
 				],
 			},
 		],
@@ -94,5 +94,8 @@ module.exports = [
 	{
 		'type': 'submit',
 		'defaultValue': 'Save Settings',
+	},
+	{
+		'type': 'debug-info',
 	},
 ];
