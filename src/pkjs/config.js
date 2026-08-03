@@ -127,11 +127,65 @@ module.exports = [
 					'maxlength': 23,
 				},
 			},
+			{
+				'type': 'toggle',
+				'messageKey': 'SETTING_USE_STATIC_LOCATION',
+				'label': 'Use Static Location',
+				'description': 'Skip GPS and always use fixed coordinates for weather and location name.',
+				'defaultValue': false,
+			},
+			{
+				'type': 'input',
+				'messageKey': 'SETTING_STATIC_LAT',
+				'label': 'Static Latitude',
+				'description': 'Used only when static location is enabled.',
+				'defaultValue': '',
+				'attributes': {
+					'type': 'number',
+					'step': 'any',
+					'placeholder': '41.8338',
+				},
+			},
+			{
+				'type': 'input',
+				'messageKey': 'SETTING_STATIC_LON',
+				'label': 'Static Longitude',
+				'description': 'Used only when static location is enabled.',
+				'defaultValue': '',
+				'attributes': {
+					'type': 'number',
+					'step': 'any',
+					'placeholder': '-87.8966',
+				},
+			},
 		],
 	},
 	{
 		'type': 'submit',
 		'defaultValue': 'Save Settings',
+	},
+	{
+		'type': 'section',
+		'items': [
+			{
+				'type': 'heading',
+				'defaultValue': 'Advanced',
+			},
+			{
+				'type': 'toggle',
+				'messageKey': 'SETTING_SHOW_ADVANCED_OPTIONS',
+				'label': 'Show advanced options',
+				'description': 'Advanced options are geared toward developers and troubleshooting. Most users should not mess with these.',
+				'defaultValue': false,
+			},
+			{
+				'type': 'toggle',
+				'messageKey': 'SETTING_CLEAR_CACHE',
+				'label': 'Clear cached data on save',
+				'description': 'Wipes cached weather and location data and refetches. Resets itself after use. *Intended for debugging and should not be necessary for normal use.*',
+				'defaultValue': false,
+			},
+		],
 	},
 	{
 		'type': 'debug-info',
