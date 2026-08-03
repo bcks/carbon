@@ -59,10 +59,15 @@ static TempLayer *s_temp_layer;
 static IconBarLayer *s_icon_bar_layer;
 
 static WeatherData s_weather;
+static uint32_t s_request_seq;
+static uint32_t s_last_sent_request_seq;
+static uint32_t s_last_answered_seq;
+static uint32_t s_minutes_since_launch;
 
 // Forward declarations
 static void prv_request_weather(void);
 static void prv_push_weather_to_layers(struct tm *now);
+static void prv_update_pending_state(void);
 
 /**
  * Ticks every minute; advances graph layers and requests fresh weather each
@@ -79,11 +84,16 @@ static void prv_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 #else
 	time_layer_update(s_time_layer, tick_time, settings_get());
 
-	// Request fresh weather every hour and re-push cached data so that
-	// current_hour advances in all graph layers regardless of whether a new
-	// fetch succeeds.
+	// Re-push graph layers each hour for display rollover, and request weather
+	// at the configured minute cadence.
 	if (units_changed & HOUR_UNIT) {
 		prv_push_weather_to_layers(tick_time);
+	}
+
+	// Note: the potential for overflow is negligible: this resets on watchface
+	// launch and would take 4082 years of continuous operation to overflow.
+	s_minutes_since_launch += 1;
+	if (s_minutes_since_launch % settings_get()->fetch_interval_min == 0) {
 		prv_request_weather();
 	}
 #endif
@@ -115,9 +125,42 @@ static void prv_push_weather_to_layers(struct tm *now) {
 	int data_offset = 0;
 	if (s_weather.fetch_time > 0) {
 		time_t now_t = time(NULL);
-		long elapsed = (long)(now_t - s_weather.fetch_time);
-		if (elapsed > 0)
-			data_offset = (int)(elapsed / 3600);
+		struct tm fetch_tm;
+		struct tm now_tm;
+		struct tm *fetch_ptr = localtime(&s_weather.fetch_time);
+		if (fetch_ptr) {
+			fetch_tm = *fetch_ptr;
+		}
+		struct tm *now_ptr = localtime(&now_t);
+		if (now_ptr) {
+			now_tm = *now_ptr;
+		}
+
+		if (fetch_ptr && now_ptr) {
+			int fetch_hour_index = fetch_tm.tm_yday * 24 + fetch_tm.tm_hour;
+			int now_hour_index = now_tm.tm_yday * 24 + now_tm.tm_hour;
+
+			if (now_tm.tm_year == fetch_tm.tm_year) {
+				data_offset = now_hour_index - fetch_hour_index;
+			} else if (now_tm.tm_year == fetch_tm.tm_year + 1) {
+				int full_year_hours = 365 * 24;
+				int fetch_year = fetch_tm.tm_year + 1900;
+				if ((fetch_year % 4 == 0 && fetch_year % 100 != 0) ||
+				    (fetch_year % 400 == 0)) {
+					full_year_hours = 366 * 24;
+				}
+				data_offset =
+				    (full_year_hours - fetch_hour_index) + now_hour_index;
+			} else {
+				long elapsed = (long)(now_t - s_weather.fetch_time);
+				if (elapsed > 0)
+					data_offset = (int)(elapsed / 3600);
+			}
+		}
+
+		if (data_offset < 0) {
+			data_offset = 0;
+		}
 	}
 
 	// If the entire cached window is in the past, nothing useful to show
@@ -176,8 +219,16 @@ static void prv_push_weather_to_layers(struct tm *now) {
 	icon_bar_layer_set_condition(s_icon_bar_layer,
 	                             weather_code_to_condition(display_code));
 	icon_bar_layer_set_daytime(s_icon_bar_layer, is_day);
+	time_t now_t = time(NULL);
+	long data_age_sec = (long)(now_t - s_weather.fetch_time);
+	if (data_age_sec < 0)
+		data_age_sec = 0;
+	long stale_threshold_sec =
+	    2L * (long)settings_get()->fetch_interval_min * 60L + 5L * 60L;
 	icon_bar_layer_set_disconnected(s_icon_bar_layer,
-	                                hours_remaining < GRAPH_HOURS);
+	                                !s_weather.is_valid ||
+	                                    data_age_sec >= stale_threshold_sec ||
+	                                    hours_remaining == 0);
 	temp_layer_set_unit(s_temp_layer, settings_get()->temp_unit_celsius);
 	temp_layer_set_data(s_temp_layer, display_temp, s_weather.high_temp,
 	                    s_weather.low_temp, temp_view, appar_view, current_hour,
@@ -237,28 +288,30 @@ static void prv_inbox_received(DictionaryIterator *iter, void *context) {
 
 	// Hourly byte arrays
 	t = dict_find(iter, MESSAGE_KEY_WEATHER_PRECIP_PROB);
-	if (t && t->type == TUPLE_BYTE_ARRAY && t->length >= 24) {
-		memcpy(s_weather.precip_prob, t->value->data, 24);
+	if (t && t->type == TUPLE_BYTE_ARRAY && t->length >= WEATHER_HOURLY_COUNT) {
+		memcpy(s_weather.precip_prob, t->value->data, WEATHER_HOURLY_COUNT);
 	}
 
 	t = dict_find(iter, MESSAGE_KEY_WEATHER_TEMP_HOURLY);
-	if (t && t->type == TUPLE_BYTE_ARRAY && t->length >= 24) {
-		memcpy(s_weather.temp_hourly, t->value->data, 24);
+	if (t && t->type == TUPLE_BYTE_ARRAY && t->length >= WEATHER_HOURLY_COUNT) {
+		memcpy(s_weather.temp_hourly, t->value->data, WEATHER_HOURLY_COUNT);
 	}
 
 	t = dict_find(iter, MESSAGE_KEY_WEATHER_APPARENT_TEMP_HOURLY);
-	if (t && t->type == TUPLE_BYTE_ARRAY && t->length >= 24) {
-		memcpy(s_weather.apparent_temp_hourly, t->value->data, 24);
+	if (t && t->type == TUPLE_BYTE_ARRAY && t->length >= WEATHER_HOURLY_COUNT) {
+		memcpy(s_weather.apparent_temp_hourly, t->value->data,
+		       WEATHER_HOURLY_COUNT);
 	}
 
 	t = dict_find(iter, MESSAGE_KEY_WEATHER_CLOUD_COVER);
-	if (t && t->type == TUPLE_BYTE_ARRAY && t->length >= 24) {
-		memcpy(s_weather.cloud_cover, t->value->data, 24);
+	if (t && t->type == TUPLE_BYTE_ARRAY && t->length >= WEATHER_HOURLY_COUNT) {
+		memcpy(s_weather.cloud_cover, t->value->data, WEATHER_HOURLY_COUNT);
 	}
 
 	t = dict_find(iter, MESSAGE_KEY_WEATHER_HOURLY_CODE);
-	if (t && t->type == TUPLE_BYTE_ARRAY && t->length >= 24) {
-		memcpy(s_weather.hourly_weather_code, t->value->data, 24);
+	if (t && t->type == TUPLE_BYTE_ARRAY && t->length >= WEATHER_HOURLY_COUNT) {
+		memcpy(s_weather.hourly_weather_code, t->value->data,
+		       WEATHER_HOURLY_COUNT);
 	}
 
 	t = dict_find(iter, MESSAGE_KEY_CITY_NAME);
@@ -272,17 +325,18 @@ static void prv_inbox_received(DictionaryIterator *iter, void *context) {
 	// data. A settings-only message must not mark the weather as valid with
 	// zeroed arrays, which would render a false "clear sky" state.
 	if (!got_weather)
-		return;
+		goto done;
 
 	// Require a fetch timestamp — without it we cannot compute data_offset and
 	// would wrongly treat data of unknown age as current.
 	t = dict_find(iter, MESSAGE_KEY_WEATHER_FETCH_TIME);
 	if (!t)
-		return;
+		goto done;
 
 	s_weather.is_valid = true;
 	s_weather.fetch_time = (time_t)t->value->int32;
-	s_weather.valid_hours = 24;
+	s_weather.valid_hours = WEATHER_HOURLY_COUNT;
+	s_last_answered_seq = s_last_sent_request_seq;
 
 	// Persist for cold-start restoration
 	persist_write_data(STORAGE_KEY_WEATHER, &s_weather, sizeof(s_weather));
@@ -290,27 +344,56 @@ static void prv_inbox_received(DictionaryIterator *iter, void *context) {
 	// Push data to layers
 	time_t now_push = time(NULL);
 	prv_push_weather_to_layers(localtime(&now_push));
+
+done:
+	prv_update_pending_state();
 }
 
 static void prv_inbox_dropped(AppMessageResult reason, void *context) {
 	APP_LOG(APP_LOG_LEVEL_WARNING, "Inbox dropped: %d", (int)reason);
 }
 
+static void prv_outbox_failed(DictionaryIterator *failed,
+                              AppMessageResult reason, void *context) {
+	(void)failed;
+	(void)context;
+	APP_LOG(APP_LOG_LEVEL_WARNING, "Outbox failed: reason=%d seq=%lu",
+	        (int)reason, (unsigned long)s_last_sent_request_seq);
+}
+
 static void prv_request_weather(void) {
+	uint32_t seq = ++s_request_seq;
 	DictionaryIterator *iter;
 	AppMessageResult result = app_message_outbox_begin(&iter);
 	if (result == APP_MSG_OK) {
-		dict_write_uint8(iter, MESSAGE_KEY_WEATHER_REQUEST, 1);
-		app_message_outbox_send();
+		s_last_sent_request_seq = seq;
+		dict_write_uint32(iter, MESSAGE_KEY_WEATHER_REQUEST, seq);
+		result = app_message_outbox_send();
+		if (result != APP_MSG_OK) {
+			APP_LOG(APP_LOG_LEVEL_WARNING,
+			        "Outbox send failed: reason=%d seq=%lu", (int)result,
+			        (unsigned long)seq);
+		}
+	} else {
+		APP_LOG(APP_LOG_LEVEL_WARNING, "Outbox begin failed: reason=%d seq=%lu",
+		        (int)result, (unsigned long)seq);
 	}
+	prv_update_pending_state();
 }
 
 static void prv_battery_handler(BatteryChargeState state) {
 	icon_bar_layer_notify_battery(s_icon_bar_layer, state);
 }
 
+static void prv_update_pending_state(void) {
+	bool connected = connection_service_peek_pebble_app_connection();
+	bool pending = connected && (s_request_seq - s_last_answered_seq) >= 2;
+	icon_bar_layer_set_pending(s_icon_bar_layer, pending);
+}
+
 static void prv_bt_handler(bool connected) {
 	icon_bar_layer_notify_bt(s_icon_bar_layer, connected);
+	prv_update_pending_state();
 }
 
 static void prv_window_load(Window *window) {
@@ -401,7 +484,13 @@ static void init(void) {
 	demo_data_load(&s_weather, settings_get());
 #else
 	if (persist_exists(STORAGE_KEY_WEATHER)) {
-		persist_read_data(STORAGE_KEY_WEATHER, &s_weather, sizeof(s_weather));
+		int stored_size = persist_get_size(STORAGE_KEY_WEATHER);
+		if (stored_size == (int)sizeof(s_weather)) {
+			persist_read_data(STORAGE_KEY_WEATHER, &s_weather,
+			                  sizeof(s_weather));
+		} else {
+			persist_delete(STORAGE_KEY_WEATHER);
+		}
 	}
 #endif
 
@@ -423,6 +512,7 @@ static void init(void) {
 #if !defined(DEMO_SCENARIO)
 	app_message_register_inbox_received(prv_inbox_received);
 	app_message_register_inbox_dropped(prv_inbox_dropped);
+	app_message_register_outbox_failed(prv_outbox_failed);
 	app_message_open(512, 64);
 #endif
 
