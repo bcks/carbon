@@ -431,8 +431,7 @@ static void prv_window_load(Window *window) {
 	                                   settings_get()->battery_display);
 
 	// Time block — owns the whole band between the graph group and the temp
-	// block so Big Time mode has room for two rows of digits. The layer centers
-	// its own contents, which lands the normal stack where it has always been.
+	// block so Big Time mode has room.
 	s_time_layer = time_layer_create(
 	    GRect(0, GRAPH_LAYERS_H, w, bounds.size.h - 2 * GRAPH_LAYERS_H));
 	layer_add_child(root, time_layer_get_layer(s_time_layer));
